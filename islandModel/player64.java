@@ -15,6 +15,7 @@ public class player64 implements ContestSubmission
     
     private long seed;
     
+    // island parameters
     public boolean withMutationStepDecay;
     public boolean withSelfAdaptation;
     public double initStepSizeAverage;
@@ -27,6 +28,10 @@ public class player64 implements ContestSubmission
     public boolean withElitism;
     public int initialPopulationSize;
     public double offspringRatio;
+    
+    // model parameters
+    public int nIslands;
+    public int epochLength;
 	
 	public player64()
 	{
@@ -57,7 +62,12 @@ public class player64 implements ContestSubmission
         boolean isSeparable = Boolean.parseBoolean(props.getProperty("Separable"));
         boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
 
-		// Determine algorithm parameters
+        // Model parameters
+        nIslands = 10;
+        epochLength = 2;
+        
+        
+		// Island parameters
         // mutation step size
         withSelfAdaptation = !isKatsuura; // apply self-adaptation of mutation step size (n)
         if (withSelfAdaptation) { // initialisation of mutation step size
@@ -74,7 +84,7 @@ public class player64 implements ContestSubmission
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         // initial population size of islands
-        initialPopulationSize = 100;
+        initialPopulationSize = 50;
         offspringRatio = 4; // 4 times as much offspring as population
         
         System.out.println("The evaluated function is " + 
@@ -97,34 +107,60 @@ public class player64 implements ContestSubmission
         Data data = new Data();
 		
         // INITIALISATION AND FITNESS EVALUATION
-		Island island = new Island(this);
-		island.initialise();
+		Island[] islands = new Island[nIslands];
+		for (int i=0; i<nIslands; i++) {
+			islands[i] = new Island(this);
+			islands[i].initialise();
+		}
         
 		//WRITE TO DATA//////////////////////////////////////////////////////
-		data.bestFitness.add(island.bestFitness);
+		double best = Double.NEGATIVE_INFINITY;
+		int bestIsland = -1;
+		for (int i=0; i<islands.length; i++) {
+			if (islands[i].bestFitness > best) {
+				best = islands[i].bestFitness;
+				bestIsland = i;
+			}
+		}
+		data.bestFitness.add(best);
 		/////////////////////////////////////////////////////////////////////
 		
 		// status printing
-        int printFreq = ((evaluations_limit_ - initialPopulationSize) / initialPopulationSize/(int)offspringRatio) / 5;
-		System.out.println("Best fitness:\n\tafter initialisation:\t\t\t\t" +
-			(island.bestFitness == Double.NEGATIVE_INFINITY ? "very small" : 
-					String.format("%6.3e", island.bestFitness)));
+        int printFreq = ((evaluations_limit_ - initialPopulationSize) / initialPopulationSize/(int)offspringRatio) / 5 / nIslands;
+		if (printFreq == 0) {printFreq = 1;}
+        System.out.println("Best fitness:\n\tafter initialisation:\t\t\t\t" +
+			(best == Double.NEGATIVE_INFINITY ? "very small" : 
+					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
 		
         while(evals < evaluations_limit_){
             // RUN EVOLUTION CYCLE ON ISLANDS
-        	island.runCycle();
+        	for (Island island : islands) {
+        		island.runCycle();
+        	}
         	nGenerations++;
+        	
+        	// MIGRATION BETWEEN ISLANDS
+        	if (nGenerations % epochLength == 0) {
+        		//migrate(islands);
+        	}
+        	
+        	// ADAPT ISLAND SIZE
+        	//resize(islands);
         	
             // print status
 			if (nGenerations % printFreq == 0) {
 				System.out.println(String.format(
     				"\tafter %d evaluations / %d generations:   \t", evals, nGenerations) +
-    				(island.bestFitness == Double.NEGATIVE_INFINITY ? "very small" : 
-					String.format("%6.3e", island.bestFitness)));
+    				(best == Double.NEGATIVE_INFINITY ? "very small" : 
+					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
             }
 			
 			//WRITE TO DATA//////////////////////////////////////////////////////
-			data.bestFitness.add(island.bestFitness);
+			best = Double.NEGATIVE_INFINITY;
+			for (Island island : islands) {
+				best = Math.max(best, island.bestFitness);
+			}
+			data.bestFitness.add(best);
 			/////////////////////////////////////////////////////////////////////
         }
         
@@ -132,12 +168,20 @@ public class player64 implements ContestSubmission
         System.out.println(
         		"Total evaluations: "+evals+" ("+nGenerations+
         		" generations). Best individual:");
-        System.out.println(island.bestChromosome.toString());
+        best = Double.NEGATIVE_INFINITY;
+        Chromosome bestChr = islands[0].bestChromosome;
+		for (Island island : islands) {
+			if (island.bestFitness>best) {
+				best = island.bestFitness;
+				bestChr = island.bestChromosome;
+			}
+			best = Math.max(best, island.bestFitness);
+		}
+		data.bestFitness.add(best);
+        System.out.println(bestChr.toString());
         
         return data;
 	}
-	
-	
 	
 	
 	// evaluate the fitness of each individual in an array
@@ -170,16 +214,6 @@ public class player64 implements ContestSubmission
 			return fitness;
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	// Helper classes and methods

@@ -14,10 +14,11 @@ public class Data {
 	@Override
 	public String toString() {
 		String str = "";
-		str += "Best fitness per generation:\n";
+		str += "Best fitness per generation:\n\t[";
 		for (double fitness : bestFitness) {
-			str += String.format("\t%.3e", fitness);
+			str += String.format("%.1e, ", fitness);
 		}
+		str += "]";
 		
 		return str;
 	}
