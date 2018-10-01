@@ -85,11 +85,15 @@ public class player64 implements ContestSubmission
         		seed);
     }
     
-	public void run()
+	public void run() {}
+	public Data runData()
 	{
 		int evals = 0; //TODO: make member of object and check at each evaluation for more robustness
         double bestFitness = 0;
         Chromosome bestChromosome = new Chromosome();
+        
+        // return object that keeps data
+        Data data = new Data();
 		
         // init population
 		Chromosome[] population; // -> array of Chromosome objects
@@ -105,6 +109,10 @@ public class player64 implements ContestSubmission
 		populationFitness = evaluateFitness(population);
 		bestFitness = findBestFitness(population, bestChromosome); // assigns best chromosome to bestChromosome
 		evals += 100;
+		
+		//WRITE TO DATA//////////////////////////////////////////////////////
+		data.bestFitness.add(bestFitness);
+		/////////////////////////////////////////////////////////////////////
 		
 		// status printing
         int printFreq = ((evaluations_limit_ - 100) / 400) / 5;
@@ -152,6 +160,10 @@ public class player64 implements ContestSubmission
         		System.out.println(bestFitness == Double.MIN_VALUE ? "very small" : 
         			bestFitness);
             }
+			
+			//WRITE TO DATA//////////////////////////////////////////////////////
+			data.bestFitness.add(bestFitness);
+			/////////////////////////////////////////////////////////////////////
         }
         
         //print final status
@@ -159,6 +171,8 @@ public class player64 implements ContestSubmission
         		"Total evaluations: "+evals+" ("+nGenerations+
         		" generations). Best individual:");
         System.out.println(bestChromosome.toString());
+        
+        return data;
 	}
 	
 	
