@@ -10,7 +10,7 @@ public class Data {
 	// at index i, gives the best fitness of the population after generation i
 	public ArrayList<Double> bestFitness = new ArrayList<Double>();
 	/** NEW FIELD
-	// at index i, gives the variance of the population after generation i
+	// at index i, gives the variance of fitness for the population after generation i
 	public ArrayList<Double> populationVariance = new ArrayList<Double>();
 	*/
 	@Override
