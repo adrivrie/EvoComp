@@ -1,11 +1,9 @@
-import org.vu.contest.ContestEvaluation;
-
 public class Evaluator {
 	
 	public static void main(String[] args) {
 		player64 model = new player64();
 		
-		simpleTest(model, 1+2+4+8, 435297L); //2142324L
+		simpleTest(model, 1+2+4+8, 32159439L); //2142324L
 	}
 		
 	/**

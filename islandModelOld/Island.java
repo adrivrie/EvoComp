@@ -43,7 +43,6 @@ public class Island
 		nGenerations++;
 		
 		// PARENT SELECTION
-		// adapt population size
 		Tuple[] matingPool = selectParentsUniformRandom();
     	
         // RECOMBINATION

@@ -63,7 +63,7 @@ public class player64 implements ContestSubmission
         boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
 
         // Model parameters
-        nIslands = 1;
+        nIslands = 10;
         epochLength = 2;
         
         
@@ -84,7 +84,7 @@ public class player64 implements ContestSubmission
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         // initial population size of islands
-        initialPopulationSize = 100;
+        initialPopulationSize = 50;
         offspringRatio = 4; // 4 times as much offspring as population
         
         System.out.println("The evaluated function is " + 
@@ -245,6 +245,7 @@ public class player64 implements ContestSubmission
 		}
 		return mx;
 	}
+	
 	
 	
 }
