@@ -33,9 +33,6 @@ public class player64 implements ContestSubmission
 		rnd_ = new Random();
 	}
 	
-	public static void main(String[] a) {
-		System.out.println("starting...");
-	}
 	
 	public void setSeed(long seed)
 	{
@@ -75,14 +72,6 @@ public class player64 implements ContestSubmission
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         
         
-        System.out.println("The evaluated function is " + 
-        		(isMultimodal ? "" : "not ") + "multimodal, " + 
-        		(hasStructure ? "" : "not ") + "regular and " +
-        		(isSeparable ? "" : "not ") + "separable. " + 
-        		"The algorithm will perform " + 
-        		evaluations_limit_ + 
-        		" evaluations with seed " +
-        		seed);
     }
     
 	public void run()
@@ -109,12 +98,6 @@ public class player64 implements ContestSubmission
 		// status printing
         int printFreq = ((evaluations_limit_ - 100) / 400) / 5;
 		int nGenerations = 0;
-		System.out.println("Best fitness:");
-		System.out.print("\tafter initialisation:\t\t\t\t");
-		System.out.println(bestFitness == Double.MIN_VALUE ? "very small" : 
-			String.format("%6.3e", bestFitness));
-		System.out.println(bestFitness == Double.MIN_VALUE ? "very small" : 
-			bestFitness);
 		
         while(evals + 400 < evaluations_limit_){
             // Select parents (uniform random)
@@ -145,20 +128,8 @@ public class player64 implements ContestSubmission
             population = (Chromosome[]) populationWithFitness.value1;
             populationFitness = (double[]) populationWithFitness.value2;
             
-            // print status
-			if (((evals - 100) / 400) % printFreq == 0) {
-				System.out.print("\tafter "+evals+" evaluations / "+
-					nGenerations+" generations:  \t");
-        		System.out.println(bestFitness == Double.MIN_VALUE ? "very small" : 
-        			bestFitness);
-            }
         }
         
-        //print final status
-        System.out.println(
-        		"Total evaluations: "+evals+" ("+nGenerations+
-        		" generations). Best individual:");
-        System.out.println(bestChromosome.toString());
 	}
 	
 	
