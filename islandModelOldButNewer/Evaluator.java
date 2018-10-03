@@ -3,8 +3,7 @@ public class Evaluator {
 	public static void main(String[] args) {
 		player64 model = new player64();
 		
-
-		simpleTest(model, 4, 2142324L); //93476678L
+		simpleTest(model, 1+2+4+8, 32159439L); //2142324L
 	}
 		
 	/**
@@ -21,7 +20,7 @@ public class Evaluator {
 			System.out.println("Sphere Evaluation");
 			model.setEvaluation(new SphereEvaluation());
 			data = model.runData();
-			//System.out.println(data.toString());
+			System.out.println(data.toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();
@@ -32,7 +31,7 @@ public class Evaluator {
 			System.out.println("Bent-Cigar Function");
 			model.setEvaluation(new BentCigarFunction());
 			data = model.runData();
-			//System.out.println(data.toString());
+			System.out.println(data.toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();
@@ -43,7 +42,7 @@ public class Evaluator {
 			System.out.println("Katsuura Evaluation");
 			model.setEvaluation(new KatsuuraEvaluation());
 			data = model.runData();
-			//System.out.println(data.toString());
+			System.out.println(data.toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();
@@ -54,7 +53,7 @@ public class Evaluator {
 			System.out.println("Schaffers Evaluation");
 			model.setEvaluation(new SchaffersEvaluation());
 			data = model.runData();
-			//System.out.println(data.toString());
+			System.out.println(data.toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();

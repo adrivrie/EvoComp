@@ -28,8 +28,7 @@ public class player64 implements ContestSubmission
     public boolean withElitism;
     public int initialPopulationSize;
     public double offspringRatio;
-    public int convergenceThreshold;
-    public int migrateAmount;
+    
     // model parameters
     public int nIslands;
     public int epochLength;
@@ -64,7 +63,7 @@ public class player64 implements ContestSubmission
         boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
 
         // Model parameters
-        nIslands = 1;
+        nIslands = 10;
         epochLength = 2;
         
         
@@ -85,13 +84,9 @@ public class player64 implements ContestSubmission
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         // initial population size of islands
-        initialPopulationSize = 100;
+        initialPopulationSize = 50;
         offspringRatio = 4; // 4 times as much offspring as population
-        // amount of generations without improvement as a condition for convergence
-        convergenceThreshold = 25;
-        // amount of individuals that migrate per island during migration
-        migrateAmount = 5;
-
+        
         System.out.println("The evaluated function is " + 
         		(isMultimodal ? "" : "not ") + "multimodal, " + 
         		(hasStructure ? "" : "not ") + "regular and " +
@@ -143,28 +138,16 @@ public class player64 implements ContestSubmission
         		island.runCycle();
         	}
         	nGenerations++;
-
-            // MIGRATION BETWEEN ISLANDS
-            if (allConverged(islands)) {
-                migrate(islands);
+        	
+        	// MIGRATION BETWEEN ISLANDS
+        	if (nGenerations % epochLength == 0) {
+        		//migrate(islands);
         	}
-            
+        	
         	// ADAPT ISLAND SIZE
         	//resize(islands);
         	
             // print status
-            //WRITE TO DATA//////////////////////////////////////////////////////
-            best = Double.NEGATIVE_INFINITY;
-            bestIsland = -1;
-            for (int i=0; i<islands.length; i++) {
-                if (islands[i].bestFitness > best) {
-                    best = islands[i].bestFitness;
-                    bestIsland = i;
-                }
-            }
-            data.bestFitness.add(best);
-            /////////////////////////////////////////////////////////////////////
-
 			if (nGenerations % printFreq == 0) {
 				System.out.println(String.format(
     				"\tafter %d evaluations / %d generations:   \t", evals, nGenerations) +
@@ -172,6 +155,13 @@ public class player64 implements ContestSubmission
 					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
             }
 			
+			//WRITE TO DATA//////////////////////////////////////////////////////
+			best = Double.NEGATIVE_INFINITY;
+			for (Island island : islands) {
+				best = Math.max(best, island.bestFitness);
+			}
+			data.bestFitness.add(best);
+			/////////////////////////////////////////////////////////////////////
         }
         
         //print final status
@@ -225,36 +215,7 @@ public class player64 implements ContestSubmission
 		}
 	}
 	
-    // Checks if all islands have converged
-    public boolean allConverged(Island[] islands){
-        for (Island island : islands){
-            if (!island.hasConverged) {
-                return false;
-            }
-        }
-        return true;
-    }
 	
-    public void migrate(Island[] islands){
-        Chromosome[][] migrants = new Chromosome[nIslands][migrateAmount];
-        //emigrate
-        for (int i = 0; i < nIslands; i++){
-            Chromosome[] emis = islands[i].getTopHalfEmigrants(migrateAmount);
-            for (int j = 0; j < migrateAmount; j++){
-                migrants[i][j] = emis[j];
-            }
-        }
-        //immigrate
-        for (int i = 0; i < nIslands; i++){
-            islands[(i+1) % nIslands].takeInImmigrants(migrants[i]);
-        }
-        //update
-        for (int i = 0; i < nIslands; i++){
-            islands[i].gensSinceImprovement = 0;
-            islands[i].hasConverged = false;
-        }
-    }
-
 	// Helper classes and methods
 	
 	private class Tuple
@@ -284,6 +245,7 @@ public class player64 implements ContestSubmission
 		}
 		return mx;
 	}
+	
 	
 	
 }

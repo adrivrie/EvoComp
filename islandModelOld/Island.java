@@ -1,6 +1,6 @@
 import java.util.Random;
 import java.util.stream.IntStream;
-import java.util.Arrays;
+
 public class Island
 {
 	// fields relating to the model
@@ -15,10 +15,6 @@ public class Island
 	public Chromosome bestChromosome = new Chromosome(); // chromosome with highest fitness in the population
 	public int populationSize;
 	
-	// variables needed for migration
-	public int convergenceThreshold;
-	public int gensSinceImprovement;
-	public boolean hasConverged;
 	
 	public Island(player64 model) {
 		this.model = model;
@@ -39,28 +35,14 @@ public class Island
         // FITNESS EVALUATION
 		populationFitnesses = model.evaluateArray(population);
 		findBestFitness(population);
-
-		// INITIALIZE CONVERGENCE
-		gensSinceImprovement = 0;
-		hasConverged = false;
-		convergenceThreshold = model.convergenceThreshold;
 	}
 	
 	// generate one new generation
 	public void runCycle() {
-
-		// CONVERGENCE CHECK
-		if (hasConverged){
-			return;
-		}
-
-		double prevBestFitness = bestFitness;
-
 		// ADAPT ALGORITHM MEASURES
 		nGenerations++;
 		
 		// PARENT SELECTION
-		// adapt population size
 		Tuple[] matingPool = selectParentsUniformRandom();
     	
         // RECOMBINATION
@@ -81,16 +63,6 @@ public class Island
         
     	// SURVIVOR SELECTION
         selectSurvivorsMuCommaLambda(offspring, offspringFitnesses);
-
-        // check if fitness has improved
-        if (bestFitness > prevBestFitness){
-        	gensSinceImprovement = 0;
-        } else {
-        	gensSinceImprovement++;
-        	if (gensSinceImprovement >= convergenceThreshold){
-        		hasConverged = true;
-        	}
-        }
 	}
 	
 	
@@ -286,49 +258,7 @@ public class Island
 	}
 	
 	
-	//// MIGRATION METHODS
-
-	public Chromosome[] getTopHalfEmigrants(int amount){
-		Chromosome[] emigrators = new Chromosome[amount];			//this
-		double[] fitnessesDeepCopy = new double[populationSize];	//
-		for (int i = 0; i < populationSize; i++){					//way
-			fitnessesDeepCopy[i] = population[i].fitness;			//
-		}															//lies
-		Arrays.sort(fitnessesDeepCopy);								//
-		double median = fitnessesDeepCopy[populationSize / 2];		//madness
-
-		int emigs = 0;
-		while (emigs < amount){
-			int ind = rnd_.nextInt(populationSize);
-			if (population[ind] == null){
-				continue;
-			}
-			if (population[ind].fitness >= median){
-				emigrators[emigs] = population[ind];
-				emigs++;
-				population[ind] = null;
-			}
-		}
-		return emigrators;
-
-	}
-
-	public void takeInImmigrants(Chromosome[] immigrants){
-		int ind = 0;
-		for (int i = 0; i < populationSize; i++){
-			if (population[i] == null) {
-				population[i] = immigrants[ind];
-				populationFitnesses[i] = immigrants[ind].fitness;
-				if (bestFitness < immigrants[ind].fitness)
-					bestFitness = immigrants[ind].fitness;
-				ind++;
-				if (ind == immigrants.length)
-					break;
-			}
-		}
-	}
-
-
+	
 	//// HELPER METHODS ////////////////////////////////////////////////////////////////////////////////
 	private class Tuple
 	{
