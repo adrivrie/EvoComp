@@ -141,7 +141,7 @@ public class player64 implements ContestSubmission
         	
         	// MIGRATION BETWEEN ISLANDS
         	if (nGenerations % epochLength == 0) {
-        		migrate(islands);
+        		//migrate(islands);
         	}
         	
         	// ADAPT ISLAND SIZE
