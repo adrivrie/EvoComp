@@ -67,6 +67,24 @@ def plotCPUtime_bestFitness(listOfAlgorithmNamesAndRunsTuples):
     plt.ylabel('best fitness')
     plt.show()
 
+def outputMeasures(metaData_list):
+    uniqueAlgorithms = metaData_list['Algorithm'].unique()
+    output = metaData[["Algorithm"]].copy()
+    output = output.drop_duplicates()
+    for x in uniqueAlgorithms:
+        output.loc[output["Algorithm"]==x,"Population size"] = metaData.loc[metaData['Algorithm']==x,"population_size"].iloc[0]
+        output.loc[output["Algorithm"]==x,"Best fitness"] = metaData.loc[metaData['Algorithm']==x,"best fitness"].iloc[0]
+        output.loc[output["Algorithm"]==x,"MBF"] = metaData.loc[metaData['Algorithm']==x,"MBF"].iloc[0]
+        output.loc[output["Algorithm"]==x,"std (best fitness)"] = metaData.loc[metaData['Algorithm']==x,"std (best fitness)"].iloc[0]
+        output.loc[output["Algorithm"]==x,"AES"] = metaData.loc[metaData['Algorithm']==x,"AES"].iloc[0]
+    print("Performance and Speed measures:")
+    print(output)
+    #print("")
+    #print("################################")
+    #print("In LaTeX format:")
+    #print("################################")
+    #print(output.to_latex())
+
 # Initial Values specific to the problem instance
 epsilon = 10
 optimal_value = 60
@@ -83,7 +101,8 @@ getMeanBestFitness(metaData)
 getBestFitnessSTD(metaData)
 getAES(metaData)
 
-print(metaData)
+#print(metaData)
+outputMeasures(metaData)
 
 plotCPUtime_bestFitness([('Algorithm1','2'),('Algorithm2','1')])
 
