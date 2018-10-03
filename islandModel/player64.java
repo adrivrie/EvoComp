@@ -3,10 +3,7 @@ import org.vu.contest.ContestSubmission;
 import org.vu.contest.ContestEvaluation;
 
 import java.util.Random;
-import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Properties;
 
 public class player64 implements ContestSubmission
@@ -14,19 +11,27 @@ public class player64 implements ContestSubmission
 	Random rnd_;
 	ContestEvaluation evaluation_;
     private int evaluations_limit_;
+    private int evals;
     
     private long seed;
     
-    private boolean withMutationStepDecay;
-    private boolean withSelfAdaptation;
-    private double initStepSizeAverage;
-	private double initMaxDeviation;
-	private double initStepSizeStd;
-	private double stepSizeBoundary;
-	private double stepSizeGeneralLearningRate;
-	private double stepSizeSpecificLearningRate;
-	private double initStepSize;
-    boolean withElitism;
+    // island parameters
+    public boolean withMutationStepDecay;
+    public boolean withSelfAdaptation;
+    public double initStepSizeAverage;
+    public double initMaxDeviation;
+	public double initStepSizeStd;
+	public double stepSizeBoundary;
+	public double stepSizeGeneralLearningRate;
+	public double stepSizeSpecificLearningRate;
+	public double initStepSize;
+    public boolean withElitism;
+    public int initialPopulationSize;
+    public double offspringRatio;
+    
+    // model parameters
+    public int nIslands;
+    public int epochLength;
 	
 	public player64()
 	{
@@ -57,7 +62,12 @@ public class player64 implements ContestSubmission
         boolean isSeparable = Boolean.parseBoolean(props.getProperty("Separable"));
         boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
 
-		// Determine algorithm parameters
+        // Model parameters
+        nIslands = 10;
+        epochLength = 2;
+        
+        
+		// Island parameters
         // mutation step size
         withSelfAdaptation = !isKatsuura; // apply self-adaptation of mutation step size (n)
         if (withSelfAdaptation) { // initialisation of mutation step size
@@ -73,7 +83,9 @@ public class player64 implements ContestSubmission
         }
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
-        
+        // initial population size of islands
+        initialPopulationSize = 50;
+        offspringRatio = 4; // 4 times as much offspring as population
         
         System.out.println("The evaluated function is " + 
         		(isMultimodal ? "" : "not ") + "multimodal, " + 
@@ -88,81 +100,67 @@ public class player64 implements ContestSubmission
 	public void run() {}
 	public Data runData()
 	{
-		int evals = 0; //TODO: make member of object and check at each evaluation for more robustness
-        double bestFitness = 0;
-        Chromosome bestChromosome = new Chromosome();
+		evals = 0;
+		int nGenerations = 0;
         
         // return object that keeps data
         Data data = new Data();
 		
-        // init population
-		Chromosome[] population; // -> array of Chromosome objects
-		double[] populationFitness;
-		if (!withSelfAdaptation) {
-			population = initialiseRandom();
-		} else {
-			population = initialiseRandom(initStepSizeAverage, initStepSizeAverage - initMaxDeviation, 
-					initStepSizeAverage + initMaxDeviation, initStepSizeStd);
+        // INITIALISATION AND FITNESS EVALUATION
+		Island[] islands = new Island[nIslands];
+		for (int i=0; i<nIslands; i++) {
+			islands[i] = new Island(this);
+			islands[i].initialise();
 		}
-		
-        // calculate fitness
-		populationFitness = evaluateFitness(population);
-		bestFitness = findBestFitness(population, bestChromosome); // assigns best chromosome to bestChromosome
-		evals += 100;
-		
+        
 		//WRITE TO DATA//////////////////////////////////////////////////////
-		data.bestFitness.add(bestFitness);
+		double best = Double.NEGATIVE_INFINITY;
+		int bestIsland = -1;
+		for (int i=0; i<islands.length; i++) {
+			if (islands[i].bestFitness > best) {
+				best = islands[i].bestFitness;
+				bestIsland = i;
+			}
+		}
+		data.bestFitness.add(best);
 		/////////////////////////////////////////////////////////////////////
 		
 		// status printing
-        int printFreq = ((evaluations_limit_ - 100) / 400) / 5;
-		int nGenerations = 0;
-		System.out.println("Best fitness:");
-		System.out.print("\tafter initialisation:\t\t\t\t");
-		System.out.println(bestFitness == Double.MIN_VALUE ? "very small" : 
-			String.format("%6.3e", bestFitness));
-		System.out.println(bestFitness == Double.MIN_VALUE ? "very small" : 
-			bestFitness);
+        int printFreq = ((evaluations_limit_ - initialPopulationSize) / initialPopulationSize/(int)offspringRatio) / 5 / nIslands;
+		if (printFreq == 0) {printFreq = 1;}
+        System.out.println("Best fitness:\n\tafter initialisation:\t\t\t\t" +
+			(best == Double.NEGATIVE_INFINITY ? "very small" : 
+					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
 		
-        while(evals + 400 < evaluations_limit_){
-            // Select parents (uniform random)
-        	Tuple[] matingPool = selectParentsUniformRandom(population);
+        while(evals < evaluations_limit_){
+            // RUN EVOLUTION CYCLE ON ISLANDS
+        	for (Island island : islands) {
+        		island.runCycle();
+        	}
+        	nGenerations++;
         	
-            // Apply crossover operators
-        	Chromosome[] offspring = recombineDiscrete(matingPool);
-        	
-        	// Apply mutation operators
-        	if (!withSelfAdaptation) {
-        		// linear decay
-        		//double mutationStepSize = initStepSize / evaluations_limit_ + (initStepSize - initStepSize/evaluations_limit_/100)*(evaluations_limit_ - evals)/evaluations_limit_; 
-        		double mutationStepSize = initStepSize / (withMutationStepDecay ? nGenerations : 1); // i.e. sigma 
-        		offspring = mutateNonUniformGaussian(offspring, mutationStepSize);
-        	} else {
-        		offspring = mutateSelfAdaptation(offspring, stepSizeBoundary, stepSizeGeneralLearningRate, stepSizeSpecificLearningRate);
+        	// MIGRATION BETWEEN ISLANDS
+        	if (nGenerations % epochLength == 0) {
+        		//migrate(islands);
         	}
         	
-            // Check fitness of unknown function
-        	double[] offspringFitness = evaluateFitness(offspring);
-        	bestFitness = findBestFitness(offspring, bestChromosome);
-            evals += 400;
-            nGenerations++;
-            
-        	// Select survivors
-            Tuple populationWithFitness = selectSurvivorsMuCommaLambda(
-            		offspring, offspringFitness, population, populationFitness, withElitism);
-            population = (Chromosome[]) populationWithFitness.value1;
-            populationFitness = (double[]) populationWithFitness.value2;
-            
+        	// ADAPT ISLAND SIZE
+        	//resize(islands);
+        	
             // print status
-			if (((evals - 100) / 400) % printFreq == 0) {
-				System.out.print("\tafter "+evals+" evaluations / "+
-					nGenerations+" generations:  \t");
-        		System.out.println(bestFitness == Double.MIN_VALUE ? "very small" : 
-        			bestFitness);
+			if (nGenerations % printFreq == 0) {
+				System.out.println(String.format(
+    				"\tafter %d evaluations / %d generations:   \t", evals, nGenerations) +
+    				(best == Double.NEGATIVE_INFINITY ? "very small" : 
+					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
             }
 			
 			//WRITE TO DATA//////////////////////////////////////////////////////
-			data.bestFitness.add(bestFitness);
+			best = Double.NEGATIVE_INFINITY;
+			for (Island island : islands) {
+				best = Math.max(best, island.bestFitness);
+			}
+			data.bestFitness.add(best);
 			/////////////////////////////////////////////////////////////////////
         }
         
@@ -170,222 +168,52 @@ public class player64 implements ContestSubmission
         System.out.println(
         		"Total evaluations: "+evals+" ("+nGenerations+
         		" generations). Best individual:");
-        System.out.println(bestChromosome.toString());
+        best = Double.NEGATIVE_INFINITY;
+        Chromosome bestChr = islands[0].bestChromosome;
+		for (Island island : islands) {
+			if (island.bestFitness>best) {
+				best = island.bestFitness;
+				bestChr = island.bestChromosome;
+			}
+			best = Math.max(best, island.bestFitness);
+		}
+		data.bestFitness.add(best);
+        System.out.println(bestChr.toString());
         
         return data;
 	}
 	
 	
-	// initialise a random population of 100 individuals
-	// TODO: find convention on mutationStepSize initialisation
-	private Chromosome[] initialiseRandom(){
-		Chromosome[] pop = new Chromosome[100];
-		
-		for (int n = 0; n<100; n++) {
-			pop[n] = new Chromosome();
-			for (int i=0; i<10; i++) {
-				pop[n].object[i] = rnd_.nextDouble()*10-5;
-			}
-		}
-		
-		return pop;
-	}
-	
-	// initialise a random population of 100 individuals
-		// TODO: find convention on mutationStepSize initialisation
-		private Chromosome[] initialiseRandom(double stepSizeAverage, double stepSizeMin, 
-				double stepSizeMax, double stepSizeStd){
-			Chromosome[] pop = new Chromosome[100];
-			
-			for (int n = 0; n<100; n++) {
-				pop[n] = new Chromosome();
-				for (int i=0; i<10; i++) {
-					pop[n].object[i] = rnd_.nextDouble()*10-5;
-					if (withSelfAdaptation) {
-						double deviation = rnd_.nextGaussian()*stepSizeStd;
-						pop[n].mutationStepSizes[i] = Math.max(stepSizeMin, Math.min(stepSizeMax, 
-								stepSizeAverage + deviation));
-					}
-				}
-			}
-			
-			return pop;
-		}
-	
-	// evaluate the fitness of each individual in a population
-	private double[] evaluateFitness(Chromosome[] population) {
+	// evaluate the fitness of each individual in an array
+	// (if the eval. limit is exceeded, only the evaluated fitnesses are returned)
+	public double[] evaluateArray(Chromosome[] population) {
 		double fitnesses[] = new double[population.length];
 		int i = 0;
 		
 		for (Chromosome individual : population) {
-			double fitness = (double)evaluation_.evaluate(individual.object);
-			fitnesses[i++] = fitness;
-			individual.fitness = fitness;
+			if (evals < evaluations_limit_) {
+				evals++;
+				double fitness = (double)evaluation_.evaluate(individual.object);
+				fitnesses[i++] = fitness;
+				individual.fitness = fitness;
+			} else {
+				System.out.println("Evaluations limit reached!");
+				break;
+			}
 		}
 		return fitnesses;
 	}
-	
-	// selects pairs of individuals using a uniform distribution
-	// 100 parents are used to form 200 pairs
-	private Tuple[] selectParentsUniformRandom(Chromosome[] parents) {
-		Tuple[] matingPool = new Tuple[200];
-		for (int i=0; i<200; i++) {
-			Chromosome parent1, parent2;
-			int index = rnd_.nextInt(100);
-			parent1 = parents[index];
-			index = rnd_.nextInt(100);
-			parent2 = parents[index];
-			matingPool[i] = new Tuple(parent1, parent2);
+	// evaluate fitness of one individual (return null if eval. limit is exceeded)
+	public Double evaluate(Chromosome individual){
+		if (evals >= evaluations_limit_) {
+			return null;
+		} else {
+			evals++;
+			double fitness = (double)evaluation_.evaluate(individual.object);
+			individual.fitness = fitness;
+			return fitness;
 		}
-		return matingPool;
 	}
-	
-	// apply discrete recombination (selecting each gene from either parent with equal probability)
-	private Chromosome[] recombineDiscrete(Tuple[] matingPool){
-		Chromosome[] offspring = new Chromosome[400];
-		
-		int offspringIndex = 0;
-		for (Tuple couple : matingPool) {
-			Chromosome child1 = new Chromosome();
-			Chromosome child2 = new Chromosome();
-			Chromosome parent1 = (Chromosome) couple.v1();
-			Chromosome parent2 = (Chromosome) couple.v2();
-			
-			// randomly assign genes from parents to children
-			for (int index=0; index<10; index++) {
-				double gene1 = parent1.object[index];
-				double gene2 = parent2.object[index];
-				if (rnd_.nextBoolean()) {
-					child1.object[index] = gene1;
-					child2.object[index] = gene2;
-				} else {
-					child1.object[index] = gene2;
-					child2.object[index] = gene1;
-				}
-			}
-			
-			// randomly assign mutation step sizes from parents to children
-			for (int index=0; index<10; index++) {
-				double size1 = parent1.mutationStepSizes[index];
-				double size2 = parent2.mutationStepSizes[index];
-				if (rnd_.nextBoolean()) {
-					child1.mutationStepSizes[index] = size1;
-					child2.mutationStepSizes[index] = size2;
-				} else {
-					child1.mutationStepSizes[index] = size2;
-					child2.mutationStepSizes[index] = size1;
-				}
-			}
-			
-			// add children to list of offspring
-			offspring[offspringIndex++] = child1;
-			offspring[offspringIndex++] = child2;
-		}
-		return offspring;
-	}
-	
-	// apply non-uniform mutation to every gene of every genotype using a Gaussian distribution
-	private Chromosome[] mutateNonUniformGaussian(Chromosome[] population, double stepSize){
-		int nGenes = population[0].object.length;
-		
-		// loop over every gene of every individual and add some deviation, 
-		// curtailing the result to the problem domain
-		for (Chromosome individual : population) {
-			for (int i=0; i<nGenes; i++) {
-				double deviation = rnd_.nextGaussian()*stepSize;
-				individual.object[i] = Math.max(-5, Math.min(5, individual.object[i] + deviation));
-			}
-		}
-		
-		return population;
-	}
-	
-	// apply uncorrelated self-adaptive mutation to each chromosome in the population
-	private Chromosome[] mutateSelfAdaptation(Chromosome[] population, double stepBoundary, 
-			double generalLearningRate, double specificLearningRate) {
-		int nGenes = population[0].object.length;
-		
-		// loop over every gene of every individual, adapt mutation step size, then the object,
-		// curtailing the result to the problem domain
-		for (Chromosome individual : population) {
-			double rndGeneral = rnd_.nextGaussian();
-			double rndSpecific;
-			for (int i=0; i<nGenes; i++) {
-				// adapt mutation step size 
-				rndSpecific = rnd_.nextGaussian();
-				double factor = Math.exp(generalLearningRate * rndGeneral +
-						specificLearningRate * rndSpecific);
-				individual.mutationStepSizes[i] = Math.max(stepBoundary, 
-						factor * individual.mutationStepSizes[i]);
-				// adapt object
-				rndSpecific = rnd_.nextGaussian();
-				double deviation = individual.mutationStepSizes[i] * rndSpecific; 
-				individual.object[i] = Math.max(-5, Math.min(5, individual.object[i] + deviation));
-			}
-		}
-
-		return population;
-	}
-	
-	// apply (mu, lambda) survivor selection, replacing the population by the best-ranked offspring
-	// apply elitism as well: if a member of the old population has the best fitness, he is kept in the population
-	private Tuple selectSurvivorsMuCommaLambda(Chromosome[] offspring, 
-			double[] offspringFitness, Chromosome[] population, double[] populationFitness,
-			boolean withElitism){
-		
-		int nOffspring = offspring.length;
-		int nIndividuals = population.length;
-		
-		Chromosome[] populationNew = new Chromosome[nIndividuals];
-		double[] populationFitnessNew = new double[nIndividuals];
-		
-		// rank the offspring and parents
-		int[] offspringRank = arraySortIndicesDouble(offspringFitness);
-		int[] populationRank = arraySortIndicesDouble(populationFitness);
-		
-		int index = 0;
-		int offspringIndex = nOffspring-1;
-		int populationRankLast = populationRank[nIndividuals-1];
-		
-		// apply elitism explicitly if a parent is the fittest individual
-		if (withElitism) {
-			if (populationFitness[populationRankLast] > offspringFitness[offspringRank[offspringIndex]]) {
-				populationNew[index] = population[populationRankLast];
-				populationFitnessNew[index++] = populationFitness[populationRankLast];
-			}
-		}
-		
-		// fill the remainder of the new population with the fittest offspring
-		while (index < nIndividuals) {
-			populationNew[index] = offspring[offspringRank[offspringIndex]];
-			populationFitnessNew[index++] = offspringFitness[offspringRank[offspringIndex--]];
-		}
-		
-		return new Tuple(populationNew, populationFitnessNew);
-	}
-	
-	// determine the best fitness found so far, and assign the chromosome that has it to bestChromosome
-	private double findBestFitness(Chromosome[] population, Chromosome bestChromosome) {
-		double bestFitness = bestChromosome.fitness;
-		
-		int indexBest = -1;
-		double currentBest = bestChromosome.fitness;
-		
-		for (int i = 0; i<population.length; i++) {
-			if (population[i].fitness > currentBest) {
-				indexBest = i;
-				currentBest = population[i].fitness;
-			}
-		}
-		
-		if (indexBest > -1) {
-			 population[indexBest].copy(bestChromosome);
-		}
-		
-		return currentBest;
-	}
-	
-	
 	
 	
 	// Helper classes and methods
@@ -408,49 +236,6 @@ public class player64 implements ContestSubmission
 		}
 	}
 	
-	private class Chromosome
-	{
-		public double[] object;
-		public double[] mutationStepSizes;
-		// angles
-		public double fitness;
-		
-		public Chromosome(){
-			object = new double[10];
-			mutationStepSizes = new double[10];
-			fitness = Double.MIN_VALUE; // TODO: wrong value (this is close to 0) -> Double.NEGATIVE_INFINITY
-		}
-		
-		// copies the fields of this object to another
-		public void copy(Chromosome c) {
-			c.object = new double[object.length];
-			System.arraycopy(object, 0, c.object, 0, object.length);
-			
-			c.mutationStepSizes = new double[mutationStepSizes.length];
-			System.arraycopy(mutationStepSizes, 0, c.mutationStepSizes, 0, mutationStepSizes.length);
-			
-			c.fitness = fitness;
-		}
-		
-		@Override
-		public String toString() {
-			String out = "Chromosome:\n-fitness: " + fitness;
-			
-			out += "\n-object: ";
-			for (double o : object) {
-				out += String.format("%6.3e", o) + "|";
-			}
-			
-			out += "\n-mutationStepSizes: ";
-			for (double m : mutationStepSizes) {
-				out += String.format("%6.3e", m) + "|";
-			}
-			
-			return out;
-		}
-		
-	}
-	
 	private double arrayMax(double[] a) {
 		double mx = Double.MIN_VALUE; //TODO: wrong value, this is close to 0
 		for (double e : a) {
@@ -461,24 +246,6 @@ public class player64 implements ContestSubmission
 		return mx;
 	}
 	
-	// TODO: make more general and cleaner
-	private int[] arraySortIndicesDouble(double[] array) {
-		Double[] a = new Double[array.length];
-		for (int i=0; i<array.length; i++) {
-			a[i] = array[i];
-		}
-		return IntStream.range(0, a.length)
-                .boxed().sorted((i, j) -> a[i].compareTo(a[j]) )
-                .mapToInt(ele -> ele).toArray();
-	}
 	
-	// TODO: doesn't work yet
-	private String format3decimals(double d) {
-		int intPart = (int)d;
-		int decimal1 = (int)Math.abs((d - intPart) * 10);
-		int decimal2 = (int)Math.abs((d - intPart - decimal1 / 10)*100);
-		int decimal3 = (int)Math.abs((d - intPart - decimal1 / 10 - decimal2 / 100)*1000);
-		
-		return intPart + "." + decimal1 + decimal2 + decimal3;
-	}
+	
 }

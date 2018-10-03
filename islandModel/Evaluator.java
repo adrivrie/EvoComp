@@ -1,9 +1,11 @@
+import org.vu.contest.ContestEvaluation;
+
 public class Evaluator {
 	
 	public static void main(String[] args) {
 		player64 model = new player64();
 		
-		simpleTest(model, 1+2+4+8, 2345315L);
+		simpleTest(model, 1+2+4+8, 435297L); //2142324L
 	}
 		
 	/**
@@ -22,6 +24,8 @@ public class Evaluator {
 			data = model.runData();
 			System.out.println(data.toString());
 			System.out.println();
+			System.out.println();
+			System.out.println();
 		}
 		
 		if ((functionSelection & 2) == 2) {
@@ -30,6 +34,8 @@ public class Evaluator {
 			model.setEvaluation(new BentCigarFunction());
 			data = model.runData();
 			System.out.println(data.toString());
+			System.out.println();
+			System.out.println();
 			System.out.println();
 		}
 		
@@ -40,6 +46,8 @@ public class Evaluator {
 			data = model.runData();
 			System.out.println(data.toString());
 			System.out.println();
+			System.out.println();
+			System.out.println();
 		}
 		
 		if ((functionSelection & 8) == 8) {
@@ -48,6 +56,8 @@ public class Evaluator {
 			model.setEvaluation(new SchaffersEvaluation());
 			data = model.runData();
 			System.out.println(data.toString());
+			System.out.println();
+			System.out.println();
 			System.out.println();
 		}
 	}
