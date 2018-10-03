@@ -1,1 +1,3 @@
 lcqQD0A=
+
+javac --release 8 -cp contest.jar player64.java
