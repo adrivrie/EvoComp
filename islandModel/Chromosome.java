@@ -1,4 +1,4 @@
-public class Chromosome
+public class Chromosome implements Cloneable
 {
 	public double[] object;
 	public double[] mutationStepSizes;
@@ -20,6 +20,11 @@ public class Chromosome
 		System.arraycopy(mutationStepSizes, 0, c.mutationStepSizes, 0, mutationStepSizes.length);
 		
 		c.fitness = fitness;
+	}
+	
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+	    return super.clone();
 	}
 	
 	@Override

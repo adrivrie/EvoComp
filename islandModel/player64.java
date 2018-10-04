@@ -64,7 +64,7 @@ public class player64 implements ContestSubmission
         boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
 
         // Model parameters
-        nIslands = 1;
+        nIslands = 10;
         epochLength = 2;
         
         
@@ -87,7 +87,6 @@ public class player64 implements ContestSubmission
         // initial population size of islands
         initialPopulationSize = 100;
         offspringRatio = 4; // 4 times as much offspring as population
-        
         // amount of generations without improvement as a condition for convergence
         convergenceThreshold = 25;
         // amount of individuals that migrate per island during migration
@@ -107,10 +106,11 @@ public class player64 implements ContestSubmission
 	public Data runData()
 	{
 		evals = 0;
+		int nEpochs = 0;
 		int nGenerations = 0;
         
         // return object that keeps data
-        Data data = new Data();
+        Data data = new Data(nIslands);
 		
         // INITIALISATION AND FITNESS EVALUATION
 		Island[] islands = new Island[nIslands];
@@ -129,6 +129,7 @@ public class player64 implements ContestSubmission
 			}
 		}
 		data.bestFitness.add(best);
+		data.addIslandHistory(islands, 0);
 		/////////////////////////////////////////////////////////////////////
 		
 		// status printing
@@ -148,7 +149,7 @@ public class player64 implements ContestSubmission
             // MIGRATION BETWEEN ISLANDS
             if (allConverged(islands)) {
                 migrate(islands);
-                System.out.println("MIGRATE");
+                nEpochs++;
         	}
             
         	// ADAPT ISLAND SIZE
@@ -165,6 +166,7 @@ public class player64 implements ContestSubmission
                 }
             }
             data.bestFitness.add(best);
+            data.addIslandHistory(islands, nEpochs);
             /////////////////////////////////////////////////////////////////////
 
 			if (nGenerations % printFreq == 0) {
@@ -179,7 +181,7 @@ public class player64 implements ContestSubmission
         //print final status
         System.out.println(
         		"Total evaluations: "+evals+" ("+nGenerations+
-        		" generations). Best individual:");
+        		" generations, "+nEpochs+" epochs). Best individual:");
         best = Double.NEGATIVE_INFINITY;
         Chromosome bestChr = islands[0].bestChromosome;
 		for (Island island : islands) {

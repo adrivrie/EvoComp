@@ -1,7 +1,7 @@
 import java.util.Random;
 import java.util.stream.IntStream;
 import java.util.Arrays;
-public class Island
+public class Island implements Cloneable
 {
 	// fields relating to the model
 	private player64 model; // model that this island is a part of
@@ -357,6 +357,21 @@ public class Island
 		return IntStream.range(0, a.length)
                 .boxed().sorted((i, j) -> a[i].compareTo(a[j]) )
                 .mapToInt(ele -> ele).toArray();
+	}
+	
+	
+	
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+	    Island cloned = (Island)super.clone();
+	    
+	    for (int i=0; i<cloned.population.length; i++) {
+	    	cloned.population[i] = (Chromosome)cloned.population[i].clone();
+	    }
+	    cloned.bestChromosome = (Chromosome)cloned.bestChromosome.clone();
+	    cloned.populationFitnesses = cloned.populationFitnesses.clone();
+
+	    return cloned;
 	}
 	
 }
