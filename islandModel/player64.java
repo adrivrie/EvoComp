@@ -87,6 +87,7 @@ public class player64 implements ContestSubmission
         // initial population size of islands
         initialPopulationSize = 100;
         offspringRatio = 4; // 4 times as much offspring as population
+        
         // amount of generations without improvement as a condition for convergence
         convergenceThreshold = 25;
         // amount of individuals that migrate per island during migration
@@ -147,6 +148,7 @@ public class player64 implements ContestSubmission
             // MIGRATION BETWEEN ISLANDS
             if (allConverged(islands)) {
                 migrate(islands);
+                System.out.println("MIGRATE");
         	}
             
         	// ADAPT ISLAND SIZE
