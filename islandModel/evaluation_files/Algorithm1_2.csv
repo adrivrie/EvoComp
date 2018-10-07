@@ -1,6 +1,8 @@
-generation,CPU_time,nr_of_evals,fitness1,fitness2,fitness3,fitnessN
-0,3,99,6,12,4,4
-1,10,99,5,2,7,5
-2,15,99,53,9,3,2
-3,30,99,2,3,8,6
-4,60,99,12,4,5,2
+evaluations,diversity
+0,100
+10,90
+20,50
+30,50
+40,20
+50,20
+60,10
