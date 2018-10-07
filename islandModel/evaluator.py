@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.stats import ttest_ind # Package needed for statistical T-test
 
 def plotBestFitness(algorithm):
     fitness_cols = algorithm.filter(regex='fitness')
@@ -53,6 +54,12 @@ def getAES(metaData_list):
     for x in uniqueAlgorithms:
         metaData.loc[metaData['Algorithm']==x, "AES"] = metaData.loc[(metaData['Algorithm']==x) & (metaData["successful"]==True), "total number of evaluations"].mean()
 
+# Gets the T-test for the means of two independent samples of scores.
+# See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html#scipy.stats.ttest_ind
+# About interpreting the P-value: https://stats.stackexchange.com/questions/31/what-is-the-meaning-of-p-values-and-t-values-in-statistical-tests#101
+def getTtestValue(algorithm1_values, algorithm2_values):
+    return ttest_ind(algorithm1_values, algorithm2_values, equal_var = False)
+
 # Plot the best fitness for an algorithm over the CPU time. Input should be a list with tuples (algorithm, run), e.g.: [(Algorithm1,1),(Algorithm2,1)]
 def plotCPUtime_bestFitness(listOfAlgorithmNamesAndRunsTuples):
     ax = plt.gca()
@@ -67,6 +74,7 @@ def plotCPUtime_bestFitness(listOfAlgorithmNamesAndRunsTuples):
     plt.ylabel('best fitness')
     plt.show()
 
+# For getting the relevant performance and speed measures in a clear table
 def outputMeasures(metaData_list):
     uniqueAlgorithms = metaData_list['Algorithm'].unique()
     output = metaData[["Algorithm"]].copy()
@@ -101,8 +109,12 @@ getMeanBestFitness(metaData)
 getBestFitnessSTD(metaData)
 getAES(metaData)
 
-#print(metaData)
-outputMeasures(metaData)
+print(metaData)
+alg1_bestfitness = metaData.loc[metaData["Algorithm"]=="Algorithm1","best fitness"]
+alg2_bestfitness = metaData.loc[metaData["Algorithm"]=="Algorithm2","best fitness"]
+print("T-test value:")
+print(getTtestValue(alg1_bestfitness,alg2_bestfitness))
+#outputMeasures(metaData)
 
 plotCPUtime_bestFitness([('Algorithm1','2'),('Algorithm2','1')])
 

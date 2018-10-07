@@ -1,0 +1,7 @@
+generation,CPU_time,nr_of_evals,fitness1,fitness2,fitness3,fitnessN
+0,10,2,3,15,10,6
+1,13,5,3,37,4,5
+2,14,3,1,4,16,5
+3,20,5,4,6,1,3
+4,25,26,22,10,2,3
+5,40,24,42,21,42,4
