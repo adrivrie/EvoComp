@@ -13,6 +13,10 @@ public class Island implements Cloneable
 	public ArrayList<Chromosome> population; // array of chromosomes
 	// DEPRECATED public double[] populationFitnesses; // fitness per chromosome in population
 	public double bestFitness; // best fitness of the current population
+	public double currentBestFitness;
+	public double worstFitness;
+	public double currentWorstFitness;
+	public double avgFitness;
 	public Chromosome bestChromosome = new Chromosome(); // chromosome with highest fitness in the population
 	public int populationSize;
 	
@@ -41,7 +45,8 @@ public class Island implements Cloneable
         // FITNESS EVALUATION
 		model.evaluateArray(population);
 		findBestFitness(population);
-
+		updateFitnessStats(population);
+		assignLifetime(population);
 		// INITIALIZE CONVERGENCE
 		gensSinceImprovement = 0;
 		hasConverged = false;
@@ -82,8 +87,12 @@ public class Island implements Cloneable
     	findBestFitness(offspring);
         
     	// SURVIVOR SELECTION
-        selectSurvivorsMuCommaLambda(offspring);
-
+    	if(model.GAVaPS){
+    		updateFitnessStats(population);
+    		selectLifetime(offspring);
+    	} else{
+        	selectSurvivorsMuCommaLambda(offspring);
+		}
         // check if fitness has improved
         if (bestFitness > prevBestFitness){
         	gensSinceImprovement = 0;
@@ -284,7 +293,88 @@ public class Island implements Cloneable
 		
 		population = populationNew;
 	}
-	
+
+	// ages the old population, gives lifetimes to the new offspring, 
+    // culls old part of old population, combines into new population
+    private void selectLifetime(ArrayList<Chromosome> offspring) {
+        ArrayList<Chromosome> newPop = new ArrayList<Chromosome>();
+        for(Chromosome individual : population) {
+            individual.age += 1;
+            if (individual.age <= individual.lifetime){
+                newPop.add(individual);
+            }
+        }
+        int meth = model.lifetimeAssignmentMethod;
+        assignLifetime(offspring);
+        for(Chromosome individual : offspring){
+            newPop.add(individual);
+        }
+        population = newPop;
+        updateFitnessStats(population);
+    }
+
+    private void assignLifetime(ArrayList<Chromosome> offspring){
+    	int meth = model.lifetimeAssignmentMethod;
+        for(Chromosome individual : offspring){
+            if (meth == 0){
+                giveLifetimeProportional(individual);
+            } else if (meth == 1) {
+                giveLifetimeLinear(individual);
+            } else if (meth == 2) {
+                giveLifetimeBilinear(individual);
+            } else {
+            	int a = 1/0;
+            }
+         }
+    }
+
+    private void giveLifetimeProportional(Chromosome child) {
+        double eta = 0.5 * (model.maxLifetime - model.minLifetime);
+        double ans = model.minLifetime + child.fitness * eta / avgFitness;
+        if (ans > model.maxLifetime) 
+            ans = model.maxLifetime;
+        child.age = 0;
+        child.lifetime = ans;
+    }
+
+    private void giveLifetimeLinear(Chromosome child) {
+        double eta = 0.5 * (model.maxLifetime - model.minLifetime);
+        double ans = model.minLifetime + 2 * eta * (child.fitness - worstFitness) / (bestFitness - worstFitness);
+        child.age = 0;
+        child.lifetime = ans;
+    }
+
+    private void giveLifetimeBilinear(Chromosome child) {
+        double eta = 0.5 * (model.maxLifetime - model.minLifetime);
+        double ans;
+        if (child.fitness <= avgFitness){
+            ans = model.minLifetime + eta * (child.fitness - currentWorstFitness) / (avgFitness - currentWorstFitness);
+        } else {
+            ans = 0.5 * (model.minLifetime + model.maxLifetime) + eta * (child.fitness - avgFitness) / (currentBestFitness - avgFitness);
+        }
+        child.age = 0;
+        child.lifetime = ans;
+    }
+
+
+    private void updateFitnessStats(ArrayList<Chromosome> population){
+        double[] fits = getPopulationFitnesses(population);
+        Arrays.sort(fits);
+        currentWorstFitness = fits[0];
+        currentBestFitness = fits[fits.length-1];
+        if (currentWorstFitness < worstFitness){
+            worstFitness = currentWorstFitness;
+        }
+        if (currentBestFitness > bestFitness){
+            bestFitness = currentBestFitness;
+        }
+        double sumOfFits = 0.0;
+        for(double d : fits){
+            sumOfFits += d;
+        }
+        avgFitness = sumOfFits / fits.length;
+
+    }
 	
 	//// MIGRATION METHODS
 

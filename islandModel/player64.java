@@ -33,6 +33,8 @@ public class player64 implements ContestSubmission
     public int migrateAmount;
     public double maxLifetime;
     public double minLifetime;
+    public int lifetimeAssignmentMethod;
+    public boolean GAVaPS;
     // model parameters
     public int nIslands;
     public int epochLength;
@@ -67,7 +69,7 @@ public class player64 implements ContestSubmission
         boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
 
         // Model parameters
-        nIslands = 1;
+        nIslands = 10;
         epochLength = 2;
         
         
@@ -88,7 +90,8 @@ public class player64 implements ContestSubmission
 
         maxLifetime = 7;
         minLifetime = 1;
-
+        GAVaPS = true;
+        lifetimeAssignmentMethod = 2; // 0=proportional; 1=linear; 2=bilinear
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         // initial population size of islands
