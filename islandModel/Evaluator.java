@@ -1,10 +1,16 @@
+import java.util.ArrayList;
+
 public class Evaluator {
+	
+	
+	
+	
 	
 	public static void main(String[] args) {
 		player64 model = new player64();
 		
 
-		simpleTest(model, 11, 345678987654L); //93476678L
+		simpleTest(model, 15, 324798L); //93476678L
 	}
 		
 	/**
@@ -47,7 +53,7 @@ public class Evaluator {
 			data = model.runData();
 			System.out.println();
 			System.out.println(data.toString());
-			System.out.println(data.history.getIsland(2, 6, 10).population[2].toString());
+			System.out.println(data.history.getIsland(2, 6, 10).population.get(2).toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();
