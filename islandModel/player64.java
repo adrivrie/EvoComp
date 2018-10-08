@@ -91,7 +91,7 @@ public class player64 implements ContestSubmission
         maxLifetime = 7;
         minLifetime = 1;
         GAVaPS = true;
-        lifetimeAssignmentMethod = 2; // 0=proportional; 1=linear; 2=bilinear
+        lifetimeAssignmentMethod = 0; // 0=proportional; 1=linear; 2=bilinear
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         // initial population size of islands
@@ -113,7 +113,7 @@ public class player64 implements ContestSubmission
     }
     
 	public void run() {}
-	public Data runData()
+	public void runData()
 	{
 		evals = 0;
 		int nEpochs = 0;
@@ -138,8 +138,7 @@ public class player64 implements ContestSubmission
 				bestIsland = i;
 			}
 		}
-		data.bestFitness.add(best);
-		data.addIslandHistory(islands, 0);
+		Data.writeIteration(islands, 0);
 		/////////////////////////////////////////////////////////////////////
 		
 		// status printing
@@ -159,6 +158,7 @@ public class player64 implements ContestSubmission
             // MIGRATION BETWEEN ISLANDS
             if (allConverged(islands)) {
                 migrate(islands);
+                System.out.println("Allochtonen!");
                 nEpochs++;
         	}
             
@@ -175,8 +175,7 @@ public class player64 implements ContestSubmission
                     bestIsland = i;
                 }
             }
-            data.bestFitness.add(best);
-            data.addIslandHistory(islands, nEpochs);
+            Data.writeIteration(islands, nEpochs);
             /////////////////////////////////////////////////////////////////////
 
 			if (nGenerations % printFreq == 0) {
@@ -203,8 +202,6 @@ public class player64 implements ContestSubmission
 		}
 		data.bestFitness.add(best);
         System.out.println(bestChr.toString());
-        
-        return data;
 	}
 	
 	
