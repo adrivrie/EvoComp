@@ -4,7 +4,7 @@ public class Evaluator {
 		player64 model = new player64();
 		
 
-		simpleTest(model, 4, 2142324L); //93476678L
+		simpleTest(model, 11, 345678987654L); //93476678L
 	}
 		
 	/**
