@@ -4,6 +4,7 @@ import org.vu.contest.ContestEvaluation;
 
 import java.util.Random;
 import java.util.stream.IntStream;
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class player64 implements ContestSubmission
@@ -66,7 +67,7 @@ public class player64 implements ContestSubmission
         boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
 
         // Model parameters
-        nIslands = 10;
+        nIslands = 1;
         epochLength = 2;
         
         
@@ -206,22 +207,16 @@ public class player64 implements ContestSubmission
 	
 	// evaluate the fitness of each individual in an array
 	// (if the eval. limit is exceeded, only the evaluated fitnesses are returned)
-	public double[] evaluateArray(Chromosome[] population) {
-		double fitnesses[] = new double[population.length];
-		int i = 0;
-		
-		for (Chromosome individual : population) {
+	public void evaluateArray(ArrayList population) {
+		for (Chromosome individual : (ArrayList<Chromosome>)population) {
 			if (evals < evaluations_limit_) {
 				evals++;
-				double fitness = (double)evaluation_.evaluate(individual.object);
-				fitnesses[i++] = fitness;
-				individual.fitness = fitness;
+				individual.fitness = (double)evaluation_.evaluate(individual.object);
 			} else {
 				System.out.println("Evaluations limit reached!");
 				break;
 			}
 		}
-		return fitnesses;
 	}
 	// evaluate fitness of one individual (return null if eval. limit is exceeded)
 	public Double evaluate(Chromosome individual){

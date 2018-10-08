@@ -1,5 +1,6 @@
 import java.util.Random;
 import java.util.stream.IntStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 public class Island implements Cloneable
 {
@@ -9,8 +10,8 @@ public class Island implements Cloneable
 	public int nGenerations; // generation number of current run
 	
 	// fields about the population
-	public Chromosome[] population; // array of chromosomes
-	public double[] populationFitnesses; // fitness per chromosome in population
+	public ArrayList<Chromosome> population; // array of chromosomes
+	// DEPRECATED public double[] populationFitnesses; // fitness per chromosome in population
 	public double bestFitness; // best fitness of the current population
 	public Chromosome bestChromosome = new Chromosome(); // chromosome with highest fitness in the population
 	public int populationSize;
@@ -34,10 +35,11 @@ public class Island implements Cloneable
 		nGenerations = 0;
 		
 		// INITIALISE POPULATION
+		population = new ArrayList<Chromosome>();
 		initialiseRandom();
 		
         // FITNESS EVALUATION
-		populationFitnesses = model.evaluateArray(population);
+		model.evaluateArray(population);
 		findBestFitness(population);
 
 		// INITIALIZE CONVERGENCE
@@ -64,7 +66,7 @@ public class Island implements Cloneable
 		Tuple[] matingPool = selectParentsUniformRandom();
     	
         // RECOMBINATION
-    	Chromosome[] offspring = recombineDiscrete(matingPool);
+    	ArrayList<Chromosome> offspring = recombineDiscrete(matingPool);
     	
     	// MUTATION
     	if (!model.withSelfAdaptation) {
@@ -76,11 +78,11 @@ public class Island implements Cloneable
     	}
     	
         // FITNESS EVALUATION
-    	double[] offspringFitnesses = model.evaluateArray(offspring);
+    	model.evaluateArray(offspring);
     	findBestFitness(offspring);
         
     	// SURVIVOR SELECTION
-        selectSurvivorsMuCommaLambda(offspring, offspringFitnesses);
+        selectSurvivorsMuCommaLambda(offspring);
 
         // check if fitness has improved
         if (bestFitness > prevBestFitness){
@@ -100,27 +102,26 @@ public class Island implements Cloneable
 	// initialise a random population with the object from a uniform distribution and
 	// the mutation step sizes (if applicable) from a normal distribution
 	// TODO: find convention on mutationStepSize initialisation
-	private void initialiseRandom(){
-		population = new Chromosome[populationSize];
-		
+	public void initialiseRandom(){
 		for (int n = 0; n<populationSize; n++) {
-			population[n] = new Chromosome();
+			Chromosome chromosome = new Chromosome();
 			for (int i=0; i<10; i++) {
-				population[n].object[i] = rnd_.nextDouble()*10-5;
+				chromosome.object[i] = rnd_.nextDouble()*10-5;
 				if (model.withSelfAdaptation) {
 					double deviation = rnd_.nextGaussian()*model.initStepSizeStd;
 					double stepSizeMin = model.initStepSizeAverage - model.initMaxDeviation;
 					double stepSizeMax = model.initStepSizeAverage + model.initMaxDeviation;
-					population[n].mutationStepSizes[i] = Math.max(stepSizeMin, 
+					chromosome.mutationStepSizes[i] = Math.max(stepSizeMin, 
 							Math.min(stepSizeMax, model.initStepSizeAverage + deviation));
 				}
 			}
+			population.add(chromosome);
 		}
 	}
 	
 	// compare the best fitness of the chromosomes in the array with the best fitness found so far.
 	// if the array contains a fitter individual, returns his fitness and sets bestChromosome to this individual
-	private void findBestFitness(Chromosome[] population) {
+	private void findBestFitness(ArrayList<Chromosome> population) {
 		double currentBest;
 		if (bestChromosome != null) {
 			currentBest = bestChromosome.fitness;
@@ -129,16 +130,17 @@ public class Island implements Cloneable
 		}
 		int indexBest = -1;
 		
-		for (int i = 0; i<population.length; i++) {
-			if (population[i].fitness > currentBest) {
-				indexBest = i;
-				currentBest = population[i].fitness;
+		for (Chromosome chromosome : population) {
+			if (chromosome.fitness > currentBest) {
+				try {
+					bestChromosome = (Chromosome)chromosome.clone();
+				} catch (CloneNotSupportedException e) {
+					e.printStackTrace();
+				}
+				currentBest = bestChromosome.fitness;
 			}
 		}
 		
-		if (indexBest > -1) {
-			 population[indexBest].copy(bestChromosome);
-		}
 		bestFitness = currentBest;
 	}
 	
@@ -150,17 +152,17 @@ public class Island implements Cloneable
 		for (int i=0; i<nPairs; i++) {
 			Chromosome parent1, parent2;
 			int index = rnd_.nextInt(populationSize);
-			parent1 = population[index];
+			parent1 = population.get(index);
 			index = rnd_.nextInt(populationSize);
-			parent2 = population[index];
+			parent2 = population.get(index);
 			matingPool[i] = new Tuple(parent1, parent2);
 		}
 		return matingPool;
 	}
 	
 	// apply discrete recombination (selecting each gene from either parent with equal probability)
-	private Chromosome[] recombineDiscrete(Tuple[] matingPool){
-		Chromosome[] offspring = new Chromosome[2*matingPool.length];
+	private ArrayList<Chromosome> recombineDiscrete(Tuple[] matingPool){
+		ArrayList<Chromosome> offspring = new ArrayList<Chromosome>();
 		
 		int offspringIndex = 0;
 		for (Tuple couple : matingPool) {
@@ -197,16 +199,16 @@ public class Island implements Cloneable
 			}
 			
 			// add children to list of offspring
-			offspring[offspringIndex++] = child1;
-			offspring[offspringIndex++] = child2;
+			offspring.add(child1);
+			offspring.add(child2);
 		}
 		return offspring;
 	}
 	
 	// apply non-uniform mutation to every gene of every genotype using a Gaussian distribution
 	// TODO: can we adjust the population parameter directly, instead of returning a new object?
-	private Chromosome[] mutateNonUniformGaussian(Chromosome[] population){
-		int nGenes = population[0].object.length;
+	private ArrayList<Chromosome> mutateNonUniformGaussian(ArrayList<Chromosome> population){
+		int nGenes = population.get(0).object.length;
 		double stepSize = model.initStepSize / (model.withMutationStepDecay ? nGenerations : 1); // i.e. sigma 
 		
 		
@@ -219,13 +221,13 @@ public class Island implements Cloneable
 			}
 		}
 		
-		return population;
+		return population; // TODO: do we need to return, or is there a reference to population?
 	}
 	
 	// apply uncorrelated self-adaptive mutation with n step sizes to each chromosome in the population
 	// TODO: can we adjust the population parameter directly, instead of returning a new object?
-	private Chromosome[] mutateSelfAdaptation(Chromosome[] population) {
-		int nGenes = population[0].object.length;
+	private ArrayList<Chromosome> mutateSelfAdaptation(ArrayList<Chromosome> population) {
+		int nGenes = population.get(0).object.length;
 		
 		// loop over every gene of every individual, adapt mutation step size, then the object,
 		// curtailing the result to the problem domain
@@ -252,16 +254,17 @@ public class Island implements Cloneable
 	// apply (mu, lambda) survivor selection, replacing the population by the best-ranked offspring
 	// apply elitism as well: if a member of the old population has the best fitness, he is kept in the population
 	// TODO: elitism with multiple chromosomes
-	private void selectSurvivorsMuCommaLambda(Chromosome[] offspring, double[] offspringFitness){
-		int nOffspring = offspringFitness.length;
-		int nIndividuals = populationFitnesses.length;
+	private void selectSurvivorsMuCommaLambda(ArrayList<Chromosome> offspring){
+		int nOffspring = offspring.size();
+		int nIndividuals = population.size();
+		double[] offspringFitness = getPopulationFitnesses(offspring);
+		double[] populationFitness = getPopulationFitnesses(population);
 		
-		Chromosome[] populationNew = new Chromosome[nIndividuals];
-		double[] populationFitnessNew = new double[nIndividuals];
+		ArrayList<Chromosome> populationNew = new ArrayList<Chromosome>();
 		
 		// rank the offspring and parents
 		int[] offspringRank = arraySortIndicesDouble(offspringFitness);
-		int[] populationRank = arraySortIndicesDouble(populationFitnesses);
+		int[] populationRank = arraySortIndicesDouble(populationFitness);
 		
 		int index = 0;
 		int offspringIndex = nOffspring-1;
@@ -269,20 +272,17 @@ public class Island implements Cloneable
 		
 		// apply elitism explicitly if a parent is the fittest individual
 		if (model.withElitism) {
-			if (populationFitnesses[populationRankLast] > offspringFitness[offspringRank[offspringIndex]]) {
-				populationNew[index] = population[populationRankLast];
-				populationFitnessNew[index++] = populationFitnesses[populationRankLast];
+			if (populationFitness[populationRankLast] > offspringFitness[offspringRank[offspringIndex]]) {
+				populationNew.add(population.get(populationRankLast));
 			}
 		}
 		
 		// fill the remainder of the new population with the fittest offspring
-		while (index < nIndividuals) {
-			populationNew[index] = offspring[offspringRank[offspringIndex]];
-			populationFitnessNew[index++] = offspringFitness[offspringRank[offspringIndex--]];
+		while (populationNew.size() < nIndividuals) {
+			populationNew.add(offspring.get(offspringRank[offspringIndex]));
 		}
 		
 		population = populationNew;
-		populationFitnesses = populationFitnessNew;
 	}
 	
 	
@@ -290,23 +290,21 @@ public class Island implements Cloneable
 
 	public Chromosome[] getTopHalfEmigrants(int amount){
 		Chromosome[] emigrators = new Chromosome[amount];			//this
-		double[] fitnessesDeepCopy = new double[populationSize];	//
-		for (int i = 0; i < populationSize; i++){					//way
-			fitnessesDeepCopy[i] = population[i].fitness;			//
-		}															//lies
+		double[] fitnessesDeepCopy = getPopulationFitnesses(population);	//
+														//lies
 		Arrays.sort(fitnessesDeepCopy);								//
 		double median = fitnessesDeepCopy[populationSize / 2];		//madness
 
 		int emigs = 0;
 		while (emigs < amount){
 			int ind = rnd_.nextInt(populationSize);
-			if (population[ind] == null){
+			if (population.get(ind) == null){
 				continue;
 			}
-			if (population[ind].fitness >= median){
-				emigrators[emigs] = population[ind];
+			if (population.get(ind).fitness >= median){
+				emigrators[emigs] = population.get(ind);
 				emigs++;
-				population[ind] = null;
+				population.set(ind, null);
 			}
 		}
 		return emigrators;
@@ -316,11 +314,16 @@ public class Island implements Cloneable
 	public void takeInImmigrants(Chromosome[] immigrants){
 		int ind = 0;
 		for (int i = 0; i < populationSize; i++){
-			if (population[i] == null) {
-				population[i] = immigrants[ind];
-				populationFitnesses[i] = immigrants[ind].fitness;
-				if (bestFitness < immigrants[ind].fitness)
-					bestFitness = immigrants[ind].fitness;
+			if (population.get(i) == null) {
+				population.set(i, immigrants[ind]);
+				if (bestFitness < immigrants[ind].fitness) {
+					try {
+						bestChromosome = (Chromosome)immigrants[ind].clone();
+					} catch (CloneNotSupportedException e) {
+						e.printStackTrace();
+					}
+					bestFitness = bestChromosome.fitness;
+				}
 				ind++;
 				if (ind == immigrants.length)
 					break;
@@ -360,17 +363,26 @@ public class Island implements Cloneable
 	}
 	
 	
+	private double[] getPopulationFitnesses(ArrayList<Chromosome> pop) {
+		double[] fitnesses = new double[pop.size()];
+		int index = 0;
+		for (Chromosome chr : pop) {
+			fitnesses[index++] = chr.fitness;
+		}
+		return fitnesses;
+	}
+	
 	
 	@Override
 	protected Object clone() throws CloneNotSupportedException {
 	    Island cloned = (Island)super.clone();
 	    
-	    for (int i=0; i<cloned.population.length; i++) {
-	    	cloned.population[i] = (Chromosome)cloned.population[i].clone();
+	    cloned.population = new ArrayList<Chromosome>();
+	    for (Chromosome chr : population) {
+	    	cloned.population.add((Chromosome)chr.clone());
 	    }
-	    cloned.bestChromosome = (Chromosome)cloned.bestChromosome.clone();
-	    cloned.populationFitnesses = cloned.populationFitnesses.clone();
-
+	    cloned.bestChromosome = (Chromosome)bestChromosome.clone();
+	    
 	    return cloned;
 	}
 	
