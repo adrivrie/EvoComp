@@ -30,6 +30,8 @@ public class player64 implements ContestSubmission
     public double offspringRatio;
     public int convergenceThreshold;
     public int migrateAmount;
+    public double maxLifetime;
+    public double minLifetime;
     // model parameters
     public int nIslands;
     public int epochLength;
@@ -82,6 +84,10 @@ public class player64 implements ContestSubmission
         	initStepSize = 0.1;
         	withMutationStepDecay = isKatsuura;
         }
+
+        maxLifetime = 7;
+        minLifetime = 1;
+
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         // initial population size of islands
