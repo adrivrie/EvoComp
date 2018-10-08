@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 
+import org.vu.contest.ContestEvaluation;
+
 public class Evaluator {
 	
 	
@@ -10,7 +12,7 @@ public class Evaluator {
 		player64 model = new player64();
 		
 
-		simpleTest(model, 15, 324798L); //93476678L
+		simpleTest(model, 4, 324798L); //93476678L
 	}
 		
 	/**
@@ -26,9 +28,8 @@ public class Evaluator {
 			model.setSeed(seed);
 			System.out.println("Sphere Evaluation");
 			model.setEvaluation(new SphereEvaluation());
-			data = model.runData();
+			model.runData();
 			System.out.println();
-			System.out.println(data.toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();
@@ -38,9 +39,8 @@ public class Evaluator {
 			model.setSeed(seed); 
 			System.out.println("Bent-Cigar Function");
 			model.setEvaluation(new BentCigarFunction());
-			data = model.runData();
+			model.runData();
 			System.out.println();
-			System.out.println(data.toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();
@@ -50,10 +50,8 @@ public class Evaluator {
 			model.setSeed(seed); 
 			System.out.println("Katsuura Evaluation");
 			model.setEvaluation(new KatsuuraEvaluation());
-			data = model.runData();
+			model.runData();
 			System.out.println();
-			System.out.println(data.toString());
-			System.out.println(data.history.getIsland(2, 6, 10).population.get(2).toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();
@@ -63,9 +61,8 @@ public class Evaluator {
 			model.setSeed(seed); // 1452345243 -> pretty good
 			System.out.println("Schaffers Evaluation");
 			model.setEvaluation(new SchaffersEvaluation());
-			data = model.runData();
+			model.runData();
 			System.out.println();
-			System.out.println(data.toString());
 			System.out.println();
 			System.out.println();
 			System.out.println();

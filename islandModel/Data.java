@@ -97,4 +97,15 @@ public class Data {
 		
 	}
 	
+	public static void writeIteration(Island[] islands, int epochIndex) {
+		// write to csv
+		
+		for (Island island : islands) {
+			System.out.print(String.format("N=%d b=%.0e\t", island.population.size(), island.bestFitness));
+		}
+		System.out.println("(epoch " + epochIndex + ")");
+		
+		// PAS OP: check of een eiland nog runt, of al geconverged is (dan hoef je geen data op te slaan want er is niks veranderd)
+	}
+	
 }
