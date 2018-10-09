@@ -3,18 +3,18 @@ import java.util.ArrayList;
 import org.vu.contest.ContestEvaluation;
 
 public class Evaluator {
-	
-	
-	
-	
-	
+
+
+
+
+
 	public static void main(String[] args) {
 		player64 model = new player64();
-		
+
 
 		simpleTest(model, 4, 324798L); //93476678L
 	}
-		
+
 	/**
 	 * Example method that runs the model on different functions.
 	 * @param model: player64 instance containing the model
@@ -23,7 +23,7 @@ public class Evaluator {
 	 */
 	private static void simpleTest(player64 model, int functionSelection, long seed) {
 		Data data;
-		
+
 		if ((functionSelection & 1) == 1) {
 			model.setSeed(seed);
 			System.out.println("Sphere Evaluation");
@@ -34,9 +34,9 @@ public class Evaluator {
 			System.out.println();
 			System.out.println();
 		}
-		
+
 		if ((functionSelection & 2) == 2) {
-			model.setSeed(seed); 
+			model.setSeed(seed);
 			System.out.println("Bent-Cigar Function");
 			model.setEvaluation(new BentCigarFunction());
 			model.runData();
@@ -45,9 +45,9 @@ public class Evaluator {
 			System.out.println();
 			System.out.println();
 		}
-		
+
 		if ((functionSelection & 4) == 4) {
-			model.setSeed(seed); 
+			model.setSeed(seed);
 			System.out.println("Katsuura Evaluation");
 			model.setEvaluation(new KatsuuraEvaluation());
 			model.runData();
@@ -56,7 +56,7 @@ public class Evaluator {
 			System.out.println();
 			System.out.println();
 		}
-		
+
 		if ((functionSelection & 8) == 8) {
 			model.setSeed(seed); // 1452345243 -> pretty good
 			System.out.println("Schaffers Evaluation");

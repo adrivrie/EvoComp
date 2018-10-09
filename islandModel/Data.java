@@ -10,7 +10,6 @@ import java.io.IOException;
  *
  */
 public class Data {
-
 	// at index i, gives the best fitness of the population after generation i
 	public ArrayList<Double> bestFitness = new ArrayList<Double>();
 
@@ -100,12 +99,11 @@ public class Data {
 
 
 	}
-
-	public static void writeIteration(Island[] islands, int epochIndex) {
+	public static Path check_file(String fileName){
 		// Find correct path or create if it doesn't exist
 		Path currentPath = Paths.get(System.getProperty("user.dir"));
 		//System.out.println(currentPath.toString());
-		Path filePath = Paths.get(currentPath.toString(), "evaluation_files","test.csv");
+		Path filePath = Paths.get(currentPath.toString(), "evaluation_files",fileName);
 
 		if (Files.notExists(filePath.getParent())){
 			// Folder doesn't exist
@@ -114,6 +112,9 @@ public class Data {
 			try {
 				Files.createDirectories(filePath.getParent());
 				Files.createFile(filePath);
+				FileWriter writer = new FileWriter(new File(filePath.toString()));
+				writer.write("generation,population_size,best_fitness,all_fitness\n");
+				writer.close();
 			} catch (IOException e){
 				e.printStackTrace();
 			}
@@ -126,17 +127,33 @@ public class Data {
 				e.printStackTrace();
 			}
 		}
+		return filePath;
+	}
+	public static void writeIteration(Island[] islands, int epochIndex) {
+		int run = 1;
+		String algorithm_name = "Alg1";
 		// write to csv
 		try{
-			File file = new File(filePath.toString());
-			FileWriter writer = new FileWriter(file, true);
-			for (Island island : islands) {
+			for (int i=0;i<islands.length;i++) {
+				Island island = islands[i];
+				Path filePath = check_file(algorithm_name+"_"+Integer.toString(run)+"_"+Integer.toString(i)+".csv");
+				File file = new File(filePath.toString());
+				// Wel n beetje kut dat je hier steeds de writer opent en sluit
+				// Maar anders cramp je alle open buffers vast.
+				FileWriter writer = new FileWriter(file, true);
 				if (!island.hasConverged){
-					writer.write(String.format("N=%d b=%.0e\t", island.population.size(), island.bestFitness));
+					// get a string of all population fitnesses
+					String fitnessString = "";
+					for (Chromosome individual: island.population){
+						fitnessString += String.format(",%.0e",individual.fitness);
+					}
+					fitnessString += "\n";
+					// write all to file
+					writer.write(String.format("%d,%d,%.0e",island.nGenerations, island.population.size(), island.bestFitness)+fitnessString);
 					//System.out.print(String.format("N=%d b=%.0e\t", island.population.size(), island.bestFitness));
 				}
+				writer.close();
 			}
-			writer.close();
 		} catch (IOException e){
 			e.printStackTrace();
 		}
