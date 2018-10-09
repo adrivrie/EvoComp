@@ -113,7 +113,7 @@ public class Data {
 				Files.createDirectories(filePath.getParent());
 				Files.createFile(filePath);
 				FileWriter writer = new FileWriter(new File(filePath.toString()));
-				writer.write("generation,population_size,best_fitness,all_fitness\n");
+				writer.write("generation,evaluations,population_size,best_fitness,all_fitness\n");
 				writer.close();
 			} catch (IOException e){
 				e.printStackTrace();
@@ -149,7 +149,7 @@ public class Data {
 					}
 					fitnessString += "\n";
 					// write all to file
-					writer.write(String.format("%d,%d,%.0e",island.nGenerations, island.population.size(), island.bestFitness)+fitnessString);
+					writer.write(String.format("%d,%d,%d,%.0e",island.nGenerations, island.evaluationsPerGeneration.get(island.nGenerations), island.population.size(), island.bestFitness)+fitnessString);
 					//System.out.print(String.format("N=%d b=%.0e\t", island.population.size(), island.bestFitness));
 				}
 				writer.close();
