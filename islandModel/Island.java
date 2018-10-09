@@ -19,6 +19,7 @@ public class Island implements Cloneable
 	public double avgFitness;
 	public Chromosome bestChromosome = new Chromosome(); // chromosome with highest fitness in the population
 	public int populationSize;
+	public ArrayList<Integer> evaluationsPerGeneration = new ArrayList<Integer>();
 	
 	// variables needed for migration
 	public int convergenceThreshold;
@@ -43,7 +44,8 @@ public class Island implements Cloneable
 		initialiseRandom();
 		
         // FITNESS EVALUATION
-		model.evaluateArray(population);
+		int nEvals = model.evaluateArray(population);
+		evaluationsPerGeneration.add(nEvals);
 		findBestFitness(population);
 		updateFitnessStats(population);
 		assignLifetime(population);
@@ -83,7 +85,8 @@ public class Island implements Cloneable
     	}
     	
         // FITNESS EVALUATION
-    	model.evaluateArray(offspring);
+    	int nEvals = model.evaluateArray(offspring);
+		evaluationsPerGeneration.add(nEvals);
     	findBestFitness(offspring);
         
     	// SURVIVOR SELECTION
@@ -360,8 +363,8 @@ public class Island implements Cloneable
     private void updateFitnessStats(ArrayList<Chromosome> population){
         double[] fits = getPopulationFitnesses(population);
         Arrays.sort(fits);
-        currentWorstFitness = fits[0];
-        currentBestFitness = fits[fits.length-1];
+        currentWorstFitness = Math.max(0, fits[0]);
+        currentBestFitness = Math.max(0, fits[fits.length-1]);
         if (currentWorstFitness < worstFitness){
             worstFitness = currentWorstFitness;
         }

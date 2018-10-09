@@ -202,12 +202,26 @@ public class player64 implements ContestSubmission
 		}
 		data.bestFitness.add(best);
         System.out.println(bestChr.toString());
+        
+        int totEvals = 0;
+        for (int i=0; i<islands.length; i++) {
+        	Island island = islands[i];
+        	System.out.print("\nIsland " + i + ":\n\t{");
+        	for (int j=0; j<island.evaluationsPerGeneration.size(); j++) {
+        		System.out.print(j+":"+island.evaluationsPerGeneration.get(j)+"; ");
+        		totEvals += island.evaluationsPerGeneration.get(j);
+        	}
+        }
+        System.out.println("\nTotal evaluations: " + totEvals + " - check: " + evals);
+        
 	}
 	
 	
 	// evaluate the fitness of each individual in an array
 	// (if the eval. limit is exceeded, only the evaluated fitnesses are returned)
-	public void evaluateArray(ArrayList population) {
+	// returns number of performed evaluations
+	public int evaluateArray(ArrayList population) {
+		int evalsStart = evals;
 		for (Chromosome individual : (ArrayList<Chromosome>)population) {
 			if (evals < evaluations_limit_) {
 				evals++;
@@ -217,6 +231,7 @@ public class player64 implements ContestSubmission
 				break;
 			}
 		}
+		return evals - evalsStart;
 	}
 	// evaluate fitness of one individual (return null if eval. limit is exceeded)
 	public Double evaluate(Chromosome individual){

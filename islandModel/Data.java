@@ -157,7 +157,6 @@ public class Data {
 		} catch (IOException e){
 			e.printStackTrace();
 		}
-		System.out.println("(epoch " + epochIndex + ")");
 
 		// PAS OP: check of een eiland nog runt, of al geconverged is (dan hoef je geen data op te slaan want er is niks veranderd)
 	}

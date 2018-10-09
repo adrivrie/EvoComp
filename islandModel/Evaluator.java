@@ -12,7 +12,7 @@ public class Evaluator {
 		player64 model = new player64();
 
 
-		simpleTest(model, 4, 324798L); //93476678L
+		simpleTest(model, 1, 324798L); //93476678L
 	}
 
 	/**
