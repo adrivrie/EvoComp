@@ -140,8 +140,9 @@ public class Data {
 				File file = new File(filePath.toString());
 				// Wel n beetje kut dat je hier steeds de writer opent en sluit
 				// Maar anders cramp je alle open buffers vast.
-				FileWriter writer = new FileWriter(file, true);
+				// Check if island has converged (then we don't neet wo write)
 				if (!island.hasConverged){
+					FileWriter writer = new FileWriter(file, true);
 					// get a string of all population fitnesses
 					String fitnessString = "";
 					for (Chromosome individual: island.population){
@@ -151,8 +152,8 @@ public class Data {
 					// write all to file
 					writer.write(String.format("%d,%d,%d,%.0e",island.nGenerations, island.evaluationsPerGeneration.get(island.nGenerations), island.population.size(), island.bestFitness)+fitnessString);
 					//System.out.print(String.format("N=%d b=%.0e\t", island.population.size(), island.bestFitness));
+					writer.close();
 				}
-				writer.close();
 			}
 		} catch (IOException e){
 			e.printStackTrace();
