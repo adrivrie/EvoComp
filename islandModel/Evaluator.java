@@ -12,8 +12,8 @@ public class Evaluator {
 		player64 model = new player64();
 
 
-		//simpleTest(model, 1, 324798L); //93476678L
-		xRunsTest(model, 1, 324798L, 2);
+		simpleTest(model, 8, 324798L); //93476678L
+		//xRunsTest(model, 2, 324798L, 2000000);
 	}
 
 	/**
@@ -23,12 +23,12 @@ public class Evaluator {
 	 * @param seed: seed for the random number generator in the model
 	 */
 	private static void simpleTest(player64 model, int functionSelection, long seed) {
-		Data data;
+		long maxEvals = 200000L;
 
 		if ((functionSelection & 1) == 1) {
 			model.setSeed(seed);
 			System.out.println("Sphere Evaluation");
-			model.setEvaluation(new SphereEvaluation());
+			model.setEvaluation(new EvaluateFitness(EvaluateFitness.FUNCTION_SPHERE, maxEvals));
 			model.runData();
 			System.out.println();
 			System.out.println();
@@ -39,7 +39,7 @@ public class Evaluator {
 		if ((functionSelection & 2) == 2) {
 			model.setSeed(seed);
 			System.out.println("Bent-Cigar Function");
-			model.setEvaluation(new BentCigarFunction());
+			model.setEvaluation(new EvaluateFitness(EvaluateFitness.FUNCTION_BENT_CIGAR, maxEvals));
 			model.runData();
 			System.out.println();
 			System.out.println();
@@ -50,7 +50,7 @@ public class Evaluator {
 		if ((functionSelection & 4) == 4) {
 			model.setSeed(seed);
 			System.out.println("Katsuura Evaluation");
-			model.setEvaluation(new KatsuuraEvaluation());
+			model.setEvaluation(new EvaluateFitness(EvaluateFitness.FUNCTION_KATSUURA, maxEvals));
 			model.runData();
 			System.out.println();
 			System.out.println();
@@ -61,7 +61,7 @@ public class Evaluator {
 		if ((functionSelection & 8) == 8) {
 			model.setSeed(seed); // 1452345243 -> pretty good
 			System.out.println("Schaffers Evaluation");
-			model.setEvaluation(new SchaffersEvaluation());
+			model.setEvaluation(new EvaluateFitness(EvaluateFitness.FUNCTION_SCHAFFERS, maxEvals));
 			model.runData();
 			System.out.println();
 			System.out.println();

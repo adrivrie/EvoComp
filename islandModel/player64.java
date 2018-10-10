@@ -10,8 +10,8 @@ import java.util.Properties;
 public class player64 implements ContestSubmission
 {
 	Random rnd_;
-	ContestEvaluation evaluation_;
-    private int evaluations_limit_;
+	EvaluateFitness evaluation_;
+    private long evaluations_limit_;
     private int evals;
 
     private long seed;
@@ -56,18 +56,19 @@ public class player64 implements ContestSubmission
 		this.seed = seed;
 	}
 
-	public void setEvaluation(ContestEvaluation evaluation)
+	public void setEvaluation(ContestEvaluation evaluation) {}
+	public void setEvaluation(EvaluateFitness evaluation)
 	{
 		// Set evaluation problem used in the run
 		evaluation_ = evaluation;
 
 		// Get evaluation properties
-		Properties props = evaluation.getProperties();
-        evaluations_limit_ = Integer.parseInt(props.getProperty("Evaluations"));
-        boolean isMultimodal = Boolean.parseBoolean(props.getProperty("Multimodal"));
-        boolean hasStructure = Boolean.parseBoolean(props.getProperty("Regular"));
-        boolean isSeparable = Boolean.parseBoolean(props.getProperty("Separable"));
-        boolean isKatsuura = isMultimodal && !hasStructure && !isSeparable;
+//		Properties props = evaluation.getProperties();
+        evaluations_limit_ = evaluation.max_evals;
+        boolean isMultimodal = true; //Boolean.parseBoolean(props.getProperty("Multimodal"));
+        boolean hasStructure = false; //Boolean.parseBoolean(props.getProperty("Regular"));
+        boolean isSeparable = false; //Boolean.parseBoolean(props.getProperty("Separable"));
+        boolean isKatsuura = true; //isMultimodal && !hasStructure && !isSeparable;
 
         // Model parameters
         nIslands = 10;
@@ -92,7 +93,7 @@ public class player64 implements ContestSubmission
         maxLifetime = 7;
         minLifetime = 1;
         GAVaPS = true;
-        lifetimeAssignmentMethod = 0; // 0=proportional; 1=linear; 2=bilinear
+        lifetimeAssignmentMethod = 2; // 0=proportional; 1=linear; 2=bilinear
         // parent selection
         withElitism = !isMultimodal; // seems to have a bad influence on the multimodal functions
         // initial population size of islands
@@ -144,13 +145,14 @@ public class player64 implements ContestSubmission
 		/////////////////////////////////////////////////////////////////////
 
 		// status printing
-        int printFreq = ((evaluations_limit_ - initialPopulationSize) / initialPopulationSize/(int)offspringRatio) / 5 / nIslands;
+        int printFreq = (int) (((evaluations_limit_ - initialPopulationSize) / initialPopulationSize/(int)offspringRatio) / 5 / nIslands);
 		if (printFreq == 0) {printFreq = 1;}
         System.out.println("Best fitness:\n\tafter initialisation:\t\t\t\t" +
 			(best == Double.NEGATIVE_INFINITY ? "very small" :
 					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
 
         while(evals < evaluations_limit_){
+        	
             // RUN EVOLUTION CYCLE ON ISLANDS
         	for (Island island : islands) {
         		island.runCycle();
@@ -177,7 +179,9 @@ public class player64 implements ContestSubmission
                     bestIsland = i;
                 }
             }
+        	System.out.println("Starting to write");
             Data.writeIteration(islands, nEpochs);
+        	System.out.println("End to write");
             /////////////////////////////////////////////////////////////////////
 
 			if (nGenerations % printFreq == 0) {

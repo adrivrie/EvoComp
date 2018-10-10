@@ -4,8 +4,8 @@ public class Chromosome implements Cloneable
 	public double[] mutationStepSizes;
 	// angles
 	public double fitness;
-	public double lifetime;
-	public double age;
+	public int lifetime;
+	public int age;
 	public Chromosome(){
 		object = new double[10];
 		mutationStepSizes = new double[10];

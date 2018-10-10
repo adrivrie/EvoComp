@@ -18,7 +18,7 @@ public class Island implements Cloneable
 	public double currentWorstFitness;
 	public double avgFitness;
 	public Chromosome bestChromosome = new Chromosome(); // chromosome with highest fitness in the population
-	public int populationSize;
+	// DEPRECATED (variable) public int populationSize;
 	public ArrayList<Integer> evaluationsPerGeneration = new ArrayList<Integer>();
 
 	// variables needed for migration
@@ -37,7 +37,6 @@ public class Island implements Cloneable
 	// initialise the island population
 	public void initialise() {
 		// SET ALGORITHM PARAMETERS AND MEASURES
-		populationSize = model.initialPopulationSize;
 		nGenerations = 0;
 
 		// INITIALISE POPULATION
@@ -75,7 +74,7 @@ public class Island implements Cloneable
 
         // RECOMBINATION
     	ArrayList<Chromosome> offspring = recombineDiscrete(matingPool);
-
+		
     	// MUTATION
     	if (!model.withSelfAdaptation) {
     		// linear decay
@@ -97,6 +96,7 @@ public class Island implements Cloneable
     	} else{
         	selectSurvivorsMuCommaLambda(offspring);
 		}
+    	
         // check if fitness has improved
         if (bestFitness > prevBestFitness){
         	gensSinceImprovement = 0;
@@ -106,6 +106,7 @@ public class Island implements Cloneable
         		hasConverged = true;
         	}
         }
+
 	}
 
 
@@ -116,7 +117,7 @@ public class Island implements Cloneable
 	// the mutation step sizes (if applicable) from a normal distribution
 	// TODO: find convention on mutationStepSize initialisation
 	public void initialiseRandom(){
-		for (int n = 0; n<populationSize; n++) {
+		for (int n = 0; n<model.initialPopulationSize; n++) {
 			Chromosome chromosome = new Chromosome();
 			for (int i=0; i<10; i++) {
 				chromosome.object[i] = rnd_.nextDouble()*10-5;
@@ -160,16 +161,17 @@ public class Island implements Cloneable
 	// selects pairs of individuals using a uniform distribution
 	// n parents are used to form (ratio)*n/2 pairs
 	private Tuple[] selectParentsUniformRandom() {
-		int nPairs = (int)(populationSize*model.offspringRatio/2);
+		int nPairs = (int)(population.size()*model.offspringRatio/2);
 		Tuple[] matingPool = new Tuple[nPairs];
 		for (int i=0; i<nPairs; i++) {
 			Chromosome parent1, parent2;
-			int index = rnd_.nextInt(populationSize);
+			int index = rnd_.nextInt(population.size());
 			parent1 = population.get(index);
-			index = rnd_.nextInt(populationSize);
+			index = rnd_.nextInt(population.size());
 			parent2 = population.get(index);
 			matingPool[i] = new Tuple(parent1, parent2);
 		}
+		
 		return matingPool;
 	}
 
@@ -310,11 +312,20 @@ public class Island implements Cloneable
         }
         int meth = model.lifetimeAssignmentMethod;
         assignLifetime(offspring);
+        
+        
+        
         for(Chromosome individual : offspring){
             newPop.add(individual);
         }
         population = newPop;
         updateFitnessStats(population);
+        
+//        System.out.print("{");
+//        for (Chromosome c : population) {
+//        	System.out.print(c.lifetime + " ");
+//        }
+//        System.out.println("}");
     }
 
     private void assignLifetime(ArrayList<Chromosome> offspring){
@@ -335,17 +346,21 @@ public class Island implements Cloneable
     private void giveLifetimeProportional(Chromosome child) {
         double eta = 0.5 * (model.maxLifetime - model.minLifetime);
         double ans = model.minLifetime + child.fitness * eta / avgFitness;
-        if (ans > model.maxLifetime)
+        if (ans > model.maxLifetime) {
             ans = model.maxLifetime;
+        }
         child.age = 0;
-        child.lifetime = ans;
+        child.lifetime = (int)ans;
     }
 
     private void giveLifetimeLinear(Chromosome child) {
         double eta = 0.5 * (model.maxLifetime - model.minLifetime);
         double ans = model.minLifetime + 2 * eta * (child.fitness - worstFitness) / (bestFitness - worstFitness);
+        if (ans > model.maxLifetime) {
+            ans = model.maxLifetime;
+        }
         child.age = 0;
-        child.lifetime = ans;
+        child.lifetime = (int)ans;
     }
 
     private void giveLifetimeBilinear(Chromosome child) {
@@ -356,8 +371,14 @@ public class Island implements Cloneable
         } else {
             ans = 0.5 * (model.minLifetime + model.maxLifetime) + eta * (child.fitness - avgFitness) / (currentBestFitness - avgFitness);
         }
+        if (ans > model.maxLifetime) {
+            ans = model.maxLifetime;
+        }
         child.age = 0;
-        child.lifetime = ans;
+        child.lifetime = (int)ans;
+        if (child.lifetime > 7) {
+            System.out.println((int)ans);
+        }
     }
 
 
@@ -387,11 +408,11 @@ public class Island implements Cloneable
 		double[] fitnessesDeepCopy = getPopulationFitnesses(population);	//
 														//lies
 		Arrays.sort(fitnessesDeepCopy);								//
-		double median = fitnessesDeepCopy[populationSize / 2];		//madness
+		double median = fitnessesDeepCopy[population.size() / 2];		//madness
 
 		int emigs = 0;
 		while (emigs < amount){
-			int ind = rnd_.nextInt(populationSize);
+			int ind = rnd_.nextInt(population.size());
 			if (population.get(ind) == null){
 				continue;
 			}
@@ -407,7 +428,7 @@ public class Island implements Cloneable
 
 	public void takeInImmigrants(Chromosome[] immigrants){
 		int ind = 0;
-		for (int i = 0; i < populationSize; i++){
+		for (int i = 0; i < population.size(); i++){
 			if (population.get(i) == null) {
 				population.set(i, immigrants[ind]);
 				if (bestFitness < immigrants[ind].fitness) {

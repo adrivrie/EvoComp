@@ -1,9 +1,18 @@
+import java.util.Properties;
+
+import org.vu.contest.ContestEvaluation;
+
+
 public class EvaluateFitness{
+	final static int FUNCTION_SPHERE = 0;
+	final static int FUNCTION_BENT_CIGAR = 1;
+	final static int FUNCTION_SCHAFFERS = 2;
+	final static int FUNCTION_KATSUURA = 3;
 
 public int evalMethod; // 0=sphere; 1=bentcigar; 2=schaffers; 3=katsuura
 public int evals;
 public int evalsInCurrentEvaluator;
-public int max_evals;
+public long max_evals;
 public ContestEvaluation evaluator;
 public int evaluations_limit;
 
@@ -12,7 +21,7 @@ public int evaluations_limit;
         this.evalMethod = evalMethod;
         this.max_evals = max_evals;
         makeEvaluator(evalMethod);
-        Properties props = evaluation.getProperties();
+        Properties props = evaluator.getProperties();
         evaluations_limit = Integer.parseInt(props.getProperty("Evaluations"));
         
     }
@@ -23,24 +32,25 @@ public int evaluations_limit;
         evalsInCurrentEvaluator++;
         if (evalsInCurrentEvaluator > evaluations_limit - 10){
             makeEvaluator(evalMethod);
+            evalsInCurrentEvaluator = 0;
         }
         if (evals > max_evals){
-            print("Evaluation limit reached, you should have prevented this.")
+            System.out.println("Evaluation limit reached, you should have prevented this.");
             int a = 1/0;
         }
-        return (double)evaluator.evaluate(individual.object)
+        return (double)evaluator.evaluate(genotype);
     }
 
 
 
     private void makeEvaluator(int n){
-        if (n==0){
+        if (n==FUNCTION_SPHERE){
             evaluator = new SphereEvaluation();
-        } else if (n==1) {
+        } else if (n==FUNCTION_BENT_CIGAR) {
             evaluator = new BentCigarFunction();
-        } else if (n==2) {
+        } else if (n==FUNCTION_KATSUURA) {
             evaluator = new KatsuuraEvaluation();
-        } else if (n==3) {
+        } else if (n==FUNCTION_SCHAFFERS) {
             evaluator = new SchaffersEvaluation();
         } 
     }
