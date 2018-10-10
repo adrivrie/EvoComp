@@ -13,9 +13,9 @@ public class player64 implements ContestSubmission
 	ContestEvaluation evaluation_;
     private int evaluations_limit_;
     private int evals;
-    
+
     private long seed;
-    
+
     // island parameters
     public boolean withMutationStepDecay;
     public boolean withSelfAdaptation;
@@ -38,16 +38,17 @@ public class player64 implements ContestSubmission
     // model parameters
     public int nIslands;
     public int epochLength;
-	
+
+	public String runName;
 	public player64()
 	{
 		rnd_ = new Random();
 	}
-	
+
 	public static void main(String[] a) {
 		System.out.println("starting...");
 	}
-	
+
 	public void setSeed(long seed)
 	{
 		// Set seed of algorithms random process
@@ -59,7 +60,7 @@ public class player64 implements ContestSubmission
 	{
 		// Set evaluation problem used in the run
 		evaluation_ = evaluation;
-		
+
 		// Get evaluation properties
 		Properties props = evaluation.getProperties();
         evaluations_limit_ = Integer.parseInt(props.getProperty("Evaluations"));
@@ -71,8 +72,8 @@ public class player64 implements ContestSubmission
         // Model parameters
         nIslands = 10;
         epochLength = 2;
-        
-        
+
+
 		// Island parameters
         // mutation step size
         withSelfAdaptation = !isKatsuura; // apply self-adaptation of mutation step size (n)
@@ -102,33 +103,34 @@ public class player64 implements ContestSubmission
         // amount of individuals that migrate per island during migration
         migrateAmount = 5;
 
-        System.out.println("The evaluated function is " + 
-        		(isMultimodal ? "" : "not ") + "multimodal, " + 
+        System.out.println("The evaluated function is " +
+        		(isMultimodal ? "" : "not ") + "multimodal, " +
         		(hasStructure ? "" : "not ") + "regular and " +
-        		(isSeparable ? "" : "not ") + "separable. " + 
-        		"The algorithm will perform " + 
-        		evaluations_limit_ + 
+        		(isSeparable ? "" : "not ") + "separable. " +
+        		"The algorithm will perform " +
+        		evaluations_limit_ +
         		" evaluations with seed " +
         		seed);
     }
-    
+
 	public void run() {}
 	public void runData()
 	{
 		evals = 0;
 		int nEpochs = 0;
 		int nGenerations = 0;
-        
+
         // return object that keeps data
         Data data = new Data(nIslands);
-		
+
         // INITIALISATION AND FITNESS EVALUATION
 		Island[] islands = new Island[nIslands];
 		for (int i=0; i<nIslands; i++) {
 			islands[i] = new Island(this);
 			islands[i].initialise();
+			islands[i].islandName = String.format(this.runName+"_%d",i);
 		}
-        
+
 		//WRITE TO DATA//////////////////////////////////////////////////////
 		double best = Double.NEGATIVE_INFINITY;
 		int bestIsland = -1;
@@ -140,14 +142,14 @@ public class player64 implements ContestSubmission
 		}
 		Data.writeIteration(islands, 0);
 		/////////////////////////////////////////////////////////////////////
-		
+
 		// status printing
         int printFreq = ((evaluations_limit_ - initialPopulationSize) / initialPopulationSize/(int)offspringRatio) / 5 / nIslands;
 		if (printFreq == 0) {printFreq = 1;}
         System.out.println("Best fitness:\n\tafter initialisation:\t\t\t\t" +
-			(best == Double.NEGATIVE_INFINITY ? "very small" : 
+			(best == Double.NEGATIVE_INFINITY ? "very small" :
 					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
-		
+
         while(evals < evaluations_limit_){
             // RUN EVOLUTION CYCLE ON ISLANDS
         	for (Island island : islands) {
@@ -161,10 +163,10 @@ public class player64 implements ContestSubmission
                 System.out.println("Allochtonen!");
                 nEpochs++;
         	}
-            
+
         	// ADAPT ISLAND SIZE
         	//resize(islands);
-        	
+
             // print status
             //WRITE TO DATA//////////////////////////////////////////////////////
             best = Double.NEGATIVE_INFINITY;
@@ -181,12 +183,12 @@ public class player64 implements ContestSubmission
 			if (nGenerations % printFreq == 0) {
 				System.out.println(String.format(
     				"\tafter %d evaluations / %d generations:   \t", evals, nGenerations) +
-    				(best == Double.NEGATIVE_INFINITY ? "very small" : 
+    				(best == Double.NEGATIVE_INFINITY ? "very small" :
 					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
             }
-			
+
         }
-        
+
         //print final status
         System.out.println(
         		"Total evaluations: "+evals+" ("+nGenerations+
@@ -202,7 +204,7 @@ public class player64 implements ContestSubmission
 		}
 		data.bestFitness.add(best);
         System.out.println(bestChr.toString());
-        
+
         int totEvals = 0;
         for (int i=0; i<islands.length; i++) {
         	Island island = islands[i];
@@ -213,10 +215,10 @@ public class player64 implements ContestSubmission
         	}
         }
         System.out.println("\nTotal evaluations: " + totEvals + " - check: " + evals);
-        
+
 	}
-	
-	
+
+
 	// evaluate the fitness of each individual in an array
 	// (if the eval. limit is exceeded, only the evaluated fitnesses are returned)
 	// returns number of performed evaluations
@@ -244,7 +246,7 @@ public class player64 implements ContestSubmission
 			return fitness;
 		}
 	}
-	
+
     // Checks if all islands have converged
     public boolean allConverged(Island[] islands){
         for (Island island : islands){
@@ -254,7 +256,7 @@ public class player64 implements ContestSubmission
         }
         return true;
     }
-	
+
     public void migrate(Island[] islands){
         Chromosome[][] migrants = new Chromosome[nIslands][migrateAmount];
         //emigrate
@@ -276,25 +278,25 @@ public class player64 implements ContestSubmission
     }
 
 	// Helper classes and methods
-	
+
 	private class Tuple
 	{
 		private Object value1, value2;
-		
+
 		public Tuple(Object value1, Object value2) {
 			this.value1 = value1;
 			this.value2 = value2;
 		}
-		
+
 		public Object v1() {
 			return value1;
 		}
-		
+
 		public Object v2() {
 			return value2;
 		}
 	}
-	
+
 	private double arrayMax(double[] a) {
 		double mx = Double.MIN_VALUE; //TODO: wrong value, this is close to 0
 		for (double e : a) {
@@ -304,6 +306,6 @@ public class player64 implements ContestSubmission
 		}
 		return mx;
 	}
-	
-	
+
+
 }

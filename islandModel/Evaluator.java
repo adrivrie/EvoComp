@@ -12,7 +12,8 @@ public class Evaluator {
 		player64 model = new player64();
 
 
-		simpleTest(model, 1, 324798L); //93476678L
+		//simpleTest(model, 1, 324798L); //93476678L
+		xRunsTest(model, 1, 324798L, 2);
 	}
 
 	/**
@@ -69,4 +70,67 @@ public class Evaluator {
 		}
 	}
 
+	/**
+	 * Example method that runs the model on different functions.
+	 * @param model: player64 instance containing the model
+	 * @param functionSelection: binary selector for the functions to evaluate (e.g. 4 -> 0100 -> only the 3rd function)
+	 * @param seed: seed for the random number generator in the model
+	 * @param numberOfRuns: amount of runs to be made with current settings
+	 */
+	private static void xRunsTest(player64 model, int functionSelection, long seed, int numberOfRuns){
+		for(int runNumber=0;runNumber<numberOfRuns;runNumber++){
+			// TODO get designator for which algorithm we use
+			String runName = String.format("Algorithm%d_%d",functionSelection,numberOfRuns);
+			Data data;
+			// modelname consists of functionselector and runNumber
+			if ((functionSelection & 1) == 1) {
+				model.setSeed(seed);
+				System.out.println("Sphere Evaluation");
+				model.setEvaluation(new SphereEvaluation());
+				model.runName = runName;
+				model.runData();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+			}
+
+			if ((functionSelection & 2) == 2) {
+				model.setSeed(seed);
+				System.out.println("Bent-Cigar Function");
+				model.setEvaluation(new BentCigarFunction());
+				model.runName = runName;
+				model.runData();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+			}
+
+			if ((functionSelection & 4) == 4) {
+				model.setSeed(seed);
+				System.out.println("Katsuura Evaluation");
+				model.setEvaluation(new KatsuuraEvaluation());
+				model.runName = runName;
+				model.runData();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+			}
+
+			if ((functionSelection & 8) == 8) {
+				model.setSeed(seed); // 1452345243 -> pretty good
+				System.out.println("Schaffers Evaluation");
+				model.setEvaluation(new SchaffersEvaluation());
+				model.runName = runName;
+				model.runData();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+				System.out.println();
+			}
+			Data.check_file(runName+".csv");
+		}
+	}
 }

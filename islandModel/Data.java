@@ -136,7 +136,7 @@ public class Data {
 		try{
 			for (int i=0;i<islands.length;i++) {
 				Island island = islands[i];
-				Path filePath = check_file(algorithm_name+"_"+Integer.toString(run)+"_"+Integer.toString(i)+".csv");
+				Path filePath = check_file(island.islandName+".csv");
 				File file = new File(filePath.toString());
 				// Wel n beetje kut dat je hier steeds de writer opent en sluit
 				// Maar anders cramp je alle open buffers vast.
