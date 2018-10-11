@@ -376,9 +376,6 @@ public class Island implements Cloneable
         }
         child.age = 0;
         child.lifetime = (int)ans;
-        if (child.lifetime > 7) {
-            System.out.println((int)ans);
-        }
     }
 
 

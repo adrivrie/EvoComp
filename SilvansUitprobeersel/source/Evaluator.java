@@ -1,4 +1,9 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Random;
 
 import org.vu.contest.ContestEvaluation;
 
@@ -9,12 +14,100 @@ public class Evaluator {
 
 
 	public static void main(String[] args) {
-		player64 model = new player64();
-
-
-		simpleTest(model, 8, 324798L); //93476678L
+		paramSearch();
+		
+		
+		//player64 model = new player64();
+		//simpleTest(model, 8, 324798L); //93476678L
 		//xRunsTest(model, 2, 324798L, 2000000);
 	}
+	
+	
+	private static void paramSearch() {
+		long maxEvals = 2000000;
+		int nSeeds = 3;
+		
+		Data data;
+		
+		try{
+			Path filePath = Data.check_file("testRun1.csv");
+			File file = new File(filePath.toString());
+			FileWriter writer = new FileWriter(file, true);
+
+			// write all to file
+			writer.write(String.format("%s,%s,%s,%s,%s,%s,%s\n",
+					"lifetimeMethod", "nIslands", "initIslandSize", "migrationSize", "maxLifetime",
+					"seeds", "fitnesses"));
+			writer.close();
+		} catch (IOException e){
+			e.printStackTrace();
+		}
+		
+		while(true) {
+			player64 model = new player64();
+			// select params
+			Random r = new Random();
+			int lifetimeMethod = r.nextInt(3);
+			int nIslands = (int)Math.pow(10, r.nextDouble()*Math.log10(20)); // 1 - 250
+			int initIslandSize = (int)(10*Math.pow(10, r.nextDouble()*Math.log10(60))); // 10 - 1000
+			int migrationSize = (int)Math.pow(10, r.nextDouble()*Math.log10(initIslandSize/2-1)); 
+			int maxLifetime = (int)(1*Math.pow(10, r.nextDouble()*Math.log10(10))); // 1 - 10
+			
+			System.out.println("Run with method="+lifetimeMethod+", nIslands="+nIslands+", initialSize="+initIslandSize+
+					", migrationSize="+migrationSize+", maxLifetime="+maxLifetime);
+			
+			Long[] seeds = new Long[nSeeds];
+			Double[] fitnesses = new Double[nSeeds];
+			for (int i=0; i<3; i++) {
+				// set seed
+				long seed = r.nextLong();
+				// evaluate model
+				model.setSeed(seed);
+				model.setEvaluation(new EvaluateFitness(EvaluateFitness.FUNCTION_KATSUURA, maxEvals));
+				model.setExperiment(lifetimeMethod, nIslands, initIslandSize, migrationSize, maxLifetime);
+				data = model.runData();
+				// get data
+				seeds[i] = seed;
+				fitnesses[i] = data.fitness;
+			}
+			
+			System.out.println("\tFitnesses: "+arrayToString(fitnesses));
+			
+			// write to csv
+			try{
+				Path filePath = Data.check_file("testRun1.csv");
+				File file = new File(filePath.toString());
+				FileWriter writer = new FileWriter(file, true);
+
+				// write all to file
+				writer.write(String.format("%d,%d,%d,%d,%d,%s,%s\n",
+						lifetimeMethod, nIslands, initIslandSize, migrationSize, maxLifetime,
+						arrayToString(seeds), arrayToString(fitnesses)));
+				writer.close();
+			} catch (IOException e){
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private static String arrayToString(Object[] arr) {
+		String str = "";
+		boolean fst = true;
+		for (Object el : arr) {
+			if (fst) {
+				fst = false;
+			} else {
+				str += ";";
+			}
+			str += el.toString();
+		}
+		str += "";
+		return str;
+	}
+	
+	
+	
 
 	/**
 	 * Example method that runs the model on different functions.
