@@ -150,7 +150,7 @@ public class Data {
 					}
 					fitnessString += "\n";
 					// write all to file
-					writer.write(String.format("%d,%d,%d,%.0e",island.nGenerations, island.evaluationsPerGeneration.get(island.nGenerations), island.population.size(), island.bestFitness)+fitnessString);
+					writer.write(String.format("%d,%d,%d",island.nGenerations, island.evaluationsPerGeneration.get(island.nGenerations), island.population.size())+fitnessString);
 					//System.out.print(String.format("N=%d b=%.0e\t", island.population.size(), island.bestFitness));
 					writer.close();
 				}
