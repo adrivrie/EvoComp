@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import ttest_ind # Package needed for statistical T-test
+import csv
 
 #def plotBestFitness(algorithm):
 #    fitness_cols = algorithm.filter(regex='fitness')
@@ -19,9 +20,22 @@ def evaluateAlgorithm(algorithm_name, run, islands):
     global all_runs
     for x in range(1,run+1):
         print("run " + str(x))
-        algorithm = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + ".csv")
-        for y in range(1,islands+1):
-            island = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv")
+        #algorithm = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + ".csv")
+        column_names = ["evaluations"]
+        for i in range(1,islands+1):
+            column_names.append("BF island " + str(i))
+        algorithm = pd.DataFrame(columns=column_names)
+        for y in range(0,islands):
+
+            #print("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv")
+            #island = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv")
+            column_names_island = ["generations", "evaluations"]
+            for j in range(1,200):
+                column_names_island.append("fitness_"+str(j))
+            island = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv", names=column_names_island)
+            print(island)
+            #best_fitness_island = island.iloc[1]
+
             algorithm["best fitness island " + str(y)] = getBestFitness(island)
         algorithm["best fitness"] = getBestFitness(algorithm)
         #algorithm["successful"] = isAlgorithmSuccessful(algorithm)
@@ -148,22 +162,23 @@ optimal_value = 65
 time_threshold = 60 # how fast algorithm should be in AES
 
 
-metaData = pd.read_csv("./islandModel/evaluation_files/metaData.csv")
-#print(metaData)
+metaData = pd.read_csv("./islandModel/evaluation_files/metaData.csv", names = ["Algorithm", "runs", "islands", "population size", "param_lifetime"])
+print(metaData)
 
 all_runs = pd.DataFrame(columns=["Algorithm","run"])
 
 i = 0
 for index, row in metaData.iterrows():
-    for x in (1,row["runs"]):
+    for x in (1,row['runs']):
         all_runs.loc[i] = [row["Algorithm"], x]
         i=i+1
+
 
 for index, row in metaData.iterrows():
     evaluateAlgorithm(row["Algorithm"], row["runs"], row["islands"])
 
 print(all_runs)
-
+"""
 getMeanBestFitness(metaData)
 #getBestFitnessSTD(metaData)
 getAES(all_runs)
@@ -197,3 +212,4 @@ plotDiversity([('Algorithm1','2'),('Algorithm2','1')])
 #dummy.plot(kind='line',x='generation',y="best_fitness",ax=ax)
 
 #plt.show()
+"""
