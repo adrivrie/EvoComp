@@ -59,17 +59,34 @@ Island Model to Optimise the Katsuura Function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
-Abstract
+The abstract goes here.  It should be about 200 words and give the
+reader a summary of the main contributions of the paper.   
+Remember that readers may decide to read or not to read your
+paper based on what is in the abstract.  The abstract never
+contains references.  
 
 \end{abstract}
 
+\section{Introduction}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Section}
+Very (VERY) brief introduction to EC/function maximization.
 
-\begin{table}[]
+Research question(s) (island model, parameter tuning, GAVaPS, katsuura).
+
+Optional: sign-post paragraph (section 16 will cover so-and-so)
+
+
+\section{Algorithms}
+
+Quick introduction into how Evo Algs work, including our specific methods (islands / crossover). Explanations can be slightly shallow (don't need to say migration gets picked from top 50\%), so long as this gets cleared up by our parameter settings.
+
+Parameter settings.
+
+Discussion about GAVaPS.
+
+\begin{table}[h]
 \caption{Parameters subject to parameter tuning.}
-\label{tab:my_label}
+\label{tab:tuningparams}
 \centering
 \begin{tabular}{>{\quad}ll}
 \toprule
@@ -83,8 +100,9 @@ Crossover rate $p_c$ & $[0,1]$ \\
 \end{tabular}
 \end{table}
 
-\begin{table}
+\begin{table}[h]
 \caption{Fixed symbolic and relevant numeric parameters of the algorithm.}
+\label{tab:params}
 \centering
 \begin{tabular}{>{\quad}ll}
 \toprule
@@ -115,6 +133,37 @@ Termination         & After 1.000.000 fitness evaluations \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Methodology}
+
+Random search over parameter space (with short justification).
+
+Gather interesting information about this random search, and get a good parameter setting out of this random search.
+
+Analyse the best (few) parameter setting(s) further.
+
+
+\section{Results}
+
+All The Graphs.
+
+\section{Conclusion}
+
+Wow island models seem to work so well when you have a large amount of islands.
+
+As it turns out, the size of the islands doesn't matter at all.
+
+Increasing migration rate only seems to be a good idea when increasing offspring ratio at the same time.
+
+Much. Wow.
+
+Future work.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 
 
 \addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
