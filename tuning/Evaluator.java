@@ -14,7 +14,7 @@ import org.vu.contest.ContestEvaluation;
 public class Evaluator {
 
 	public static void main(String[] args) {
-		paramSearch("silvan0.csv");
+		paramSearch("silvan1.csv");
 		
 		
 		//player64 model = new player64();
@@ -107,9 +107,9 @@ public class Evaluator {
 				FileWriter writer = new FileWriter(file, true);
 
 				// write all to file
-				writer.write(String.format("%d,%d,%f,%f,%s,%s\n",
-						islandAmount, islandSize, migrationSize, crossoverRate,
-						arrayToString(seeds), arrayArrayToString(bestGenotypes)));
+				writer.write(String.format("%d,%d,%f,%d,%s,%s,%s,%s\n",
+						islandAmount, islandSize, (int)(migrationSize*islandSize), crossoverRate,
+						arrayToString(seeds), arrayToString(epochs), arrayToString(fitnesses), arrayArrayToString(bestGenotypes)));
 				writer.close();
 			} catch (IOException e){
 				e.printStackTrace();
