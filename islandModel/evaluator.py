@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import ttest_ind # Package needed for statistical T-test
-import scipy.interpolate
+import scipy.interpolate as intp
+import scipy as sp
 from mpl_toolkits.mplot3d import Axes3D
-
 
 class Evaluator:
     #epsilon
@@ -35,8 +35,6 @@ class Evaluator:
         x = self.metaData[xaxis]
         y = self.metaData[yaxis]
         z = self.metaData["MBF"]
-
-        cartcoord = list(zip(x, y))
         X = np.linspace(min(x), max(x))
         Y = np.linspace(min(y), max(y))
         X, Y = np.meshgrid(X, Y)
@@ -45,9 +43,8 @@ class Evaluator:
         #interp = scipy.interpolate.LinearNDInterpolator(cartcoord, z, fill_value=0)
         #Z0 = interp(X, Y)
 
-        func = scipy.interpolate.interp2d(x, y, z)
+        func = sp.interpolate.interp2d(x, y, z)
         Z = func(X[0, :], Y[:, 0])
-        print(Z.shape)
         cmhot = plt.get_cmap("viridis")
         #plt.figure()
         #plt.pcolormesh(X, Y, Z0)
@@ -64,9 +61,23 @@ class Evaluator:
         ax.set_zlabel("Mean Best Fitness")
         plt.show()
 
-        #xx, yy = np.meshgrid(self.metaData[xaxis], self.metaData[yaxis])
-        #ax.plot_trisurf(xx,yy,self.metaData["MBF"])
-        #ax.scatter(self.metaData[xaxis], self.metaData[yaxis], self.metaData["MBF"])
+    # The x axis is fixed
+    def plotSlice(self,xaxis,yaxis,fixed_x):
+        # Create coordinate pairs
+        x = self.metaData[xaxis]
+        y = self.metaData[yaxis]
+        z = self.metaData["MBF"]
+        func = sp.interpolate.interp2d(x, y, z)
+        cmhot = plt.get_cmap("viridis")
+
+        fig = plt.figure()
+        xq = fixed_x
+        yq = np.linspace(min(y), max(y))
+        Z = func(xq, yq)
+        plt.plot(yq,Z)
+        plt.xlabel(yaxis)
+        plt.ylabel("Mean Best Fitness")
+        plt.show()
 
     # Evaluates the algorithm for performance measures and speed, results are put in the metaData file
     def evaluateAlgorithm(self,algorithm_name, run, islands):
