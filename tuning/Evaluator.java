@@ -14,25 +14,25 @@ import org.vu.contest.ContestEvaluation;
 public class Evaluator {
 
 	public static void main(String[] args) {
-		paramSearch("silvan1.csv");
-		
-		
+		paramSearch("oskar.csv");
+
+
 		//player64 model = new player64();
 		//simpleTest(model, 8, 324798L); //93476678L
 		//xRunsTest(model, 2, 324798L, 2000000);
 	}
-	
+
 	private static void paramSearch() {
 		SimpleDateFormat format = new SimpleDateFormat("dd_hh_mm_ss'.csv'");
 		String filename = format.format(new Date());
 		paramSearch(filename);
 	}
-	
+
 	private static void paramSearch(String filename) {
 		// search meta-parameters
 		long maxEvals = 1000000;
 		int nSeeds = 5;
-		
+
 		// create file and write column headers if still empty
 		try{
 			Path filePath = Data.check_file(filename);
@@ -40,13 +40,13 @@ public class Evaluator {
 
 			// add headers
 			boolean isEmpty = false;
-			BufferedReader br = new BufferedReader(new FileReader(file));     
+			BufferedReader br = new BufferedReader(new FileReader(file));
 			isEmpty = (br.readLine() == null);
 			br.close();
 			if (isEmpty) {
 				FileWriter writer = new FileWriter(file, true);
 				writer.write(String.format("%s,%s,%s,%s,%s,%s,%s,%s\n",
-						"islandAmount", "islandSize", "migrationSize", "crossoverRate", 
+						"islandAmount", "islandSize", "migrationSize", "crossoverRate",
 						"seed", "epochAmount", "fitnessMax", "genotypeBest"));
 				writer.close();
 			}
@@ -54,8 +54,8 @@ public class Evaluator {
 			e.printStackTrace();
 		}
 		double bestFound = Double.NEGATIVE_INFINITY;
-		
-		
+
+
 		Data data;
 
 		while(true) {
@@ -66,10 +66,10 @@ public class Evaluator {
 			int islandSize = (int)randomFromLogScale(10, 2000);
 			double migrationSize = randomFromLogScale(.01, .2);
 			double crossoverRate = r.nextDouble();
-			
+
 			System.out.println("Run with\n\tislandAmount="+islandAmount+"\n\tislandSize="+islandSize+
 					"\n\tmigrationSize="+migrationSize+"\n\tcrossoverRate="+crossoverRate);
-			
+
 			Long[] seeds = new Long[nSeeds];
 			Double[] fitnesses = new Double[nSeeds];
 			Double[][] bestGenotypes = new Double[nSeeds][10];
@@ -90,7 +90,7 @@ public class Evaluator {
 				}
 				epochs[i] = data.epochs;
 			}
-			
+
 			//print results
 			for (double fitness : fitnesses) {
 				if (fitness > bestFound) {bestFound = fitness;}
@@ -99,7 +99,7 @@ public class Evaluator {
 					"\n\t\tBest fitness in search: "+bestFound+
 					"\n\tNumber of epochs: "+arrayToString(epochs) +
 					"\n\tBest genotypes: "+arrayArrayToString(bestGenotypes)+"\n");
-			
+
 			// write to csv
 			try{
 				Path filePath = Data.check_file(filename);
@@ -107,24 +107,24 @@ public class Evaluator {
 				FileWriter writer = new FileWriter(file, true);
 
 				// write all to file
-				writer.write(String.format("%d,%d,%f,%d,%s,%s,%s,%s\n",
-						islandAmount, islandSize, (int)(migrationSize*islandSize), crossoverRate,
+				writer.write(String.format("%d,%d,%f,%f,%s,%s,%s,%s\n",
+						islandAmount, islandSize, (float)(migrationSize*islandSize), (float)crossoverRate,
 						arrayToString(seeds), arrayToString(epochs), arrayToString(fitnesses), arrayArrayToString(bestGenotypes)));
 				writer.close();
 			} catch (IOException e){
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
-	
+
 	private static double randomFromLogScale(double min, double max) {
 		Random r = new Random();
 		double minPow = Math.log10(min);
 		double maxPow = Math.log10(max);
 		return Math.pow(10, minPow + r.nextDouble()*(maxPow - minPow));
 	}
-	
+
 	private static String arrayToString(Object[] arr) {
 		String str = "";
 		boolean fst = true;
@@ -139,7 +139,7 @@ public class Evaluator {
 		str += "";
 		return str;
 	}
-	
+
 	private static String arrayArrayToString(Object[][] arr) {
 		String str = "";
 		boolean isFirst = true;
@@ -153,8 +153,8 @@ public class Evaluator {
 		}
 		return str;
 	}
-	
-	
+
+
 
 	/**
 	 * Example method that runs the model on different functions.
