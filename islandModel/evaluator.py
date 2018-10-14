@@ -19,22 +19,37 @@ class Evaluator:
     def setMetaData(self,file,list):
         self.metaData = pd.read_csv(file, names = list)
 
+    def setMetaData(self,file):
+        self.metaData = pd.read_csv(file, sep=',', engine='python')
+        #print(self.metaData.drop('epochAmount', 1))
+        fitness = self.metaData.fitnessMax.str.split(";", expand=True)
+        column_names = []
+        for i in range(1,len(fitness.columns)+1):
+            column_names.append("Fitness " +str(i))
+        fitness.columns = column_names
+        fitness = fitness.apply(pd.to_numeric, errors='coerce')
+        #print(fitness.dtypes)
+        self.metaData = pd.concat([self.metaData.drop('fitnessMax', 1), fitness], axis=1)
+
     def getMetaData(self):
-        print(self.metaData)
+        return self.metaData
 
-    def evaluateExperiment(self,file,list):
-        self.setMetaData(file,list)
-        for index, row in self.metaData.iterrows():
-            alg_name = str(row["Algorithm"])
-            algorithm = pd.read_csv("./islandModel/experiment_output/" + alg_name +".csv",names = ["run","best fitness"])
+    def evaluateExperiment(self,file):
+        self.setMetaData(file)
+        self.metaData["Mean Best Fitness"] = self.getMeanBestFitness(self.metaData)
+        print(self.metaData["Mean Best Fitness"].values.min())
+        #for index, row in self.metaData.iterrows():
+            #alg_name = str(row["Algorithm"])
+            #algorithm = pd.read_csv("./islandModel/experiment_output/" + alg_name +".csv",names = ["run","best fitness"])
             #print(algorithm)
-            self.metaData.loc[(self.metaData['Algorithm']==alg_name),"MBF"] = algorithm["best fitness"].mean()
+            #self.metaData.loc[(self.metaData[index,"MBF"] = algorithm["best fitness"].mean()
 
-    def plotExperiment(self,xaxis,yaxis):
+
+    def plotExperiment(self,xaxis,yaxis,surface_plot):
         # Create coordinate pairs
         x = self.metaData[xaxis]
         y = self.metaData[yaxis]
-        z = self.metaData["MBF"]
+        z = self.metaData["Mean Best Fitness"]
         X = np.linspace(min(x), max(x))
         Y = np.linspace(min(y), max(y))
         X, Y = np.meshgrid(X, Y)
@@ -42,9 +57,10 @@ class Evaluator:
         # Approach 1
         #interp = scipy.interpolate.LinearNDInterpolator(cartcoord, z, fill_value=0)
         #Z0 = interp(X, Y)
-
-        func = sp.interpolate.interp2d(x, y, z)
-        Z = func(X[0, :], Y[:, 0])
+        if surface_plot:
+            z_grid = sp.interpolate.griddata(np.array([x.ravel(),y.ravel()]).T,z.ravel(),(X,Y),) #method='cubic')   # default method is linear
+        #func = sp.interpolate.interp2d(x, y, z)
+        #Z = func(X[0, :], Y[:, 0])
         cmhot = plt.get_cmap("viridis")
         #plt.figure()
         #plt.pcolormesh(X, Y, Z0)
@@ -53,29 +69,42 @@ class Evaluator:
         fig = plt.figure()
         ax = Axes3D(fig)
         #xx, yy = np.meshgrid(self.metaData[xaxis], self.metaData[yaxis])
-        #ax.plot_trisurf(xx,yy,self.metaData["MBF"])
-        #ax.scatter(self.metaData[xaxis], self.metaData[yaxis], self.metaData["MBF"])
-        ax.plot_surface(X,Y,Z,cmap=cmhot)
+        #ax.plot_trisurf(x,y,z)
+        if surface_plot:
+            ax.plot_surface(X,Y,z_grid)#,cmap=cmhot, vmin=z_grid.min(), vmax=z_grid.max())
+        else:
+            ax.scatter(self.metaData[xaxis], self.metaData[yaxis], self.metaData["Mean Best Fitness"],cmap=cmhot)
         ax.set_xlabel(xaxis)
         ax.set_ylabel(yaxis)
         ax.set_zlabel("Mean Best Fitness")
         plt.show()
 
-    # The x axis is fixed
-    def plotSlice(self,xaxis,yaxis,fixed_x):
+    # The x4 axis is not fixed
+    def plotSlice(self,var1,var2,var3,var4,fix1,fix2,fix3):
         # Create coordinate pairs
-        x = self.metaData[xaxis]
-        y = self.metaData[yaxis]
-        z = self.metaData["MBF"]
-        func = sp.interpolate.interp2d(x, y, z)
+        #x = self.metaData[xaxis]
+        #y = self.metaData[yaxis]
+        x1 = self.metaData[var1]
+        x2 = self.metaData[var2]
+        x3 = self.metaData[var3]
+        x4 = self.metaData[var4]
+        z = self.metaData["Mean Best Fitness"]
+        #xq = fixed_x
+        yq = np.linspace(min(x4), max(x4))
+        Z = sp.interpolate.griddata(np.array([x1.ravel(),x2.ravel(),x3.ravel(),x4.ravel()]).T,
+                                          z.ravel(),
+                                          (fix1,fix2,fix3,yq)) #method='cubic')   # default method is linear
+        #Z = sp.interpolate.griddata(np.array([x.ravel(),y.ravel()]).T,
+        #                                  z.ravel(),
+        #                                  (xq,yq)) #method='cubic')   # default method is linear
+
         cmhot = plt.get_cmap("viridis")
 
         fig = plt.figure()
-        xq = fixed_x
-        yq = np.linspace(min(y), max(y))
-        Z = func(xq, yq)
+
+        #Z = func(xq, yq)
         plt.plot(yq,Z)
-        plt.xlabel(yaxis)
+        plt.xlabel(var4)
         plt.ylabel("Mean Best Fitness")
         plt.show()
 
@@ -143,13 +172,17 @@ class Evaluator:
 
     # Gets the MBF and std of the algorithm and adds it to the meta data
     def getMeanBestFitness(self,metaData_list):
-        fitness_cols = metaData_list.filter(regex='best fitness')
-        uniqueAlgorithms = metaData_list['Algorithm'].unique()
-        i = 0
-        for x in uniqueAlgorithms:
-            metaData.loc[metaData['Algorithm']==x, "MBF"] = fitness_cols.iloc[i].mean()
-            metaData.loc[metaData['Algorithm']==x, "std (best fitness)"] = fitness_cols.iloc[i].std()
-            i=i+1
+        #fitness_cols = metaData_list.filter(regex='best fitness')
+        fitness_cols = metaData_list.filter(regex='Fitness')
+        print(fitness_cols)
+        #fitness_cols = pd.to_numeric(fitness_cols)
+        return(fitness_cols.values.mean(axis=1))
+        #uniqueAlgorithms = metaData_list['Algorithm'].unique()
+        #i = 0
+        #for x in uniqueAlgorithms:
+        #    metaData.loc[metaData['Algorithm']==x, "MBF"] = fitness_cols.iloc[i].mean()
+        #    metaData.loc[metaData['Algorithm']==x, "std (best fitness)"] = fitness_cols.iloc[i].std()
+        #    i=i+1
 
     # Gets the average number of evaluations on termination with successful outcomes
     def getAES(self,list):
