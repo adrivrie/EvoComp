@@ -46,7 +46,6 @@ class Evaluator:
 
 
     def plotExperiment(self,xaxis,yaxis,surface_plot):
-        # Create coordinate pairs
         x = self.metaData[xaxis]
         y = self.metaData[yaxis]
         z = self.metaData["Mean Best Fitness"]
@@ -58,7 +57,7 @@ class Evaluator:
         #interp = scipy.interpolate.LinearNDInterpolator(cartcoord, z, fill_value=0)
         #Z0 = interp(X, Y)
         if surface_plot:
-            z_grid = sp.interpolate.griddata(np.array([x.ravel(),y.ravel()]).T,z.ravel(),(X,Y),) #method='cubic')   # default method is linear
+            z_grid = sp.interpolate.griddata(np.array([x.ravel(),y.ravel()]).T,z.ravel(),(X,Y))#,method='nearest') #method='cubic')   # default method is linear
         #func = sp.interpolate.interp2d(x, y, z)
         #Z = func(X[0, :], Y[:, 0])
         cmhot = plt.get_cmap("viridis")
@@ -71,9 +70,9 @@ class Evaluator:
         #xx, yy = np.meshgrid(self.metaData[xaxis], self.metaData[yaxis])
         #ax.plot_trisurf(x,y,z)
         if surface_plot:
-            ax.plot_surface(X,Y,z_grid)#,cmap=cmhot, vmin=z_grid.min(), vmax=z_grid.max())
+            ax.plot_surface(X,Y,z_grid,cmap=cmhot, vmin=0, vmax=10)
         else:
-            ax.scatter(self.metaData[xaxis], self.metaData[yaxis], self.metaData["Mean Best Fitness"],cmap=cmhot)
+            ax.scatter(x, y, z,c=z,cmap=cmhot, vmin=0, vmax=10)
         ax.set_xlabel(xaxis)
         ax.set_ylabel(yaxis)
         ax.set_zlabel("Mean Best Fitness")
@@ -81,28 +80,17 @@ class Evaluator:
 
     # The x4 axis is not fixed
     def plotSlice(self,var1,var2,var3,var4,fix1,fix2,fix3):
-        # Create coordinate pairs
-        #x = self.metaData[xaxis]
-        #y = self.metaData[yaxis]
         x1 = self.metaData[var1]
         x2 = self.metaData[var2]
         x3 = self.metaData[var3]
         x4 = self.metaData[var4]
         z = self.metaData["Mean Best Fitness"]
-        #xq = fixed_x
         yq = np.linspace(min(x4), max(x4))
         Z = sp.interpolate.griddata(np.array([x1.ravel(),x2.ravel(),x3.ravel(),x4.ravel()]).T,
                                           z.ravel(),
-                                          (fix1,fix2,fix3,yq)) #method='cubic')   # default method is linear
-        #Z = sp.interpolate.griddata(np.array([x.ravel(),y.ravel()]).T,
-        #                                  z.ravel(),
-        #                                  (xq,yq)) #method='cubic')   # default method is linear
-
+                                          (fix1,fix2,fix3,yq)) #method='cubic')   # default method is linea
         cmhot = plt.get_cmap("viridis")
-
         fig = plt.figure()
-
-        #Z = func(xq, yq)
         plt.plot(yq,Z)
         plt.xlabel(var4)
         plt.ylabel("Mean Best Fitness")
