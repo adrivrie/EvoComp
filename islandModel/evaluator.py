@@ -78,21 +78,21 @@ class Evaluator:
         ax.set_zlabel("Mean Best Fitness")
         plt.show()
 
-    # The x4 axis is not fixed
-    def plotSlice(self,var1,var2,var3,var4,fix1,fix2,fix3):
+    # The x3 axis is not fixed
+    def plotSlice(self,var1,var2,var3,fix1,fix2):
         x1 = self.metaData[var1]
         x2 = self.metaData[var2]
         x3 = self.metaData[var3]
-        x4 = self.metaData[var4]
+        #x4 = self.metaData[var4]
         z = self.metaData["Mean Best Fitness"]
-        yq = np.linspace(min(x4), max(x4))
-        Z = sp.interpolate.griddata(np.array([x1.ravel(),x2.ravel(),x3.ravel(),x4.ravel()]).T,
+        yq = np.linspace(min(x3), max(x3))
+        Z = sp.interpolate.griddata(np.array([x1.ravel(),x2.ravel(),x3.ravel()]).T,
                                           z.ravel(),
-                                          (fix1,fix2,fix3,yq),method='nearest') #method='cubic')   # default method is linea
-        cmhot = plt.get_cmap("viridis")
+                                          (fix1,fix2,yq),method='nearest') #method='cubic')   # default method is linea
+        #cmhot = plt.get_cmap("viridis")
         fig = plt.figure()
         plt.plot(yq,Z)
-        plt.xlabel(var4)
+        plt.xlabel(var3)
         plt.ylabel("Mean Best Fitness")
         plt.show()
 
