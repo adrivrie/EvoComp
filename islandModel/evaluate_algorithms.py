@@ -1,23 +1,13 @@
 from evaluator import Evaluator
 import pandas as pd
 
-metaData = pd.read_csv("./islandModel/evaluation_files/metaData.csv", names = ["Algorithm", "runs", "islands", "population size", "param_lifetime"])
-print(metaData)
-
 # Initial Values specific to the problem instance
-eval = Evaluator(10,65,60,metaData)
-
-all_runs = pd.DataFrame(columns=["Algorithm","run"])
-
-i = 0
-for index, row in metaData.iterrows():
-    for x in (1,row['runs']):
-        all_runs.loc[i] = [row["Algorithm"], x]
-        i=i+1
+eval = Evaluator(10,65,60)
+eval.setMetaData("./islandModel/evaluation_files/metaData.csv", names = ["algorithm", "runs", "islands", "population size"])
+eval.evaluateAlgorithms()
 
 
-for index, row in metaData.iterrows():
-    eval.evaluateAlgorithm(row["Algorithm"], row["runs"], row["islands"])
+
 
 print(all_runs)
 """

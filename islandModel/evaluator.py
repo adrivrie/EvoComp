@@ -19,22 +19,36 @@ class Evaluator:
     def setMetaData(self,file,list):
         self.metaData = pd.read_csv(file, names = list)
 
+    def setMetaData(self,file):
+        self.metaData = pd.read_csv(file, sep=',', engine='python')
+        #print(self.metaData.drop('epochAmount', 1))
+        fitness = self.metaData.fitnessMax.str.split(";", expand=True)
+        column_names = []
+        for i in range(1,len(fitness.columns)+1):
+            column_names.append("Fitness " +str(i))
+        fitness.columns = column_names
+        fitness = fitness.apply(pd.to_numeric, errors='coerce')
+        #print(fitness.dtypes)
+        self.metaData = pd.concat([self.metaData.drop('fitnessMax', 1), fitness], axis=1)
+
     def getMetaData(self):
-        print(self.metaData)
+        return self.metaData
 
-    def evaluateExperiment(self,file,list):
-        self.setMetaData(file,list)
-        for index, row in self.metaData.iterrows():
-            alg_name = str(row["Algorithm"])
-            algorithm = pd.read_csv("./islandModel/experiment_output/" + alg_name +".csv",names = ["run","best fitness"])
+    def evaluateExperiment(self,file):
+        self.setMetaData(file)
+        self.metaData["Mean Best Fitness"] = self.getMeanBestFitness(self.metaData,True)
+        print(self.metaData["Mean Best Fitness"].values.min())
+        #for index, row in self.metaData.iterrows():
+            #alg_name = str(row["Algorithm"])
+            #algorithm = pd.read_csv("./islandModel/experiment_output/" + alg_name +".csv",names = ["run","best fitness"])
             #print(algorithm)
-            self.metaData.loc[(self.metaData['Algorithm']==alg_name),"MBF"] = algorithm["best fitness"].mean()
+            #self.metaData.loc[(self.metaData[index,"MBF"] = algorithm["best fitness"].mean()
 
-    def plotExperiment(self,xaxis,yaxis):
-        # Create coordinate pairs
+
+    def plotExperiment(self,xaxis,yaxis,surface_plot):
         x = self.metaData[xaxis]
         y = self.metaData[yaxis]
-        z = self.metaData["MBF"]
+        z = self.metaData["Mean Best Fitness"]
         X = np.linspace(min(x), max(x))
         Y = np.linspace(min(y), max(y))
         X, Y = np.meshgrid(X, Y)
@@ -42,9 +56,10 @@ class Evaluator:
         # Approach 1
         #interp = scipy.interpolate.LinearNDInterpolator(cartcoord, z, fill_value=0)
         #Z0 = interp(X, Y)
-
-        func = sp.interpolate.interp2d(x, y, z)
-        Z = func(X[0, :], Y[:, 0])
+        if surface_plot:
+            z_grid = sp.interpolate.griddata(np.array([x.ravel(),y.ravel()]).T,z.ravel(),(X,Y))#,method='nearest') #method='cubic')   # default method is linear
+        #func = sp.interpolate.interp2d(x, y, z)
+        #Z = func(X[0, :], Y[:, 0])
         cmhot = plt.get_cmap("viridis")
         #plt.figure()
         #plt.pcolormesh(X, Y, Z0)
@@ -53,61 +68,79 @@ class Evaluator:
         fig = plt.figure()
         ax = Axes3D(fig)
         #xx, yy = np.meshgrid(self.metaData[xaxis], self.metaData[yaxis])
-        #ax.plot_trisurf(xx,yy,self.metaData["MBF"])
-        #ax.scatter(self.metaData[xaxis], self.metaData[yaxis], self.metaData["MBF"])
-        ax.plot_surface(X,Y,Z,cmap=cmhot)
+        #ax.plot_trisurf(x,y,z)
+        if surface_plot:
+            ax.plot_surface(X,Y,z_grid,cmap=cmhot, vmin=0, vmax=10)
+        else:
+            ax.scatter(x, y, z,c=z,cmap=cmhot, vmin=0, vmax=10)
         ax.set_xlabel(xaxis)
         ax.set_ylabel(yaxis)
         ax.set_zlabel("Mean Best Fitness")
         plt.show()
 
-    # The x axis is fixed
-    def plotSlice(self,xaxis,yaxis,fixed_x):
-        # Create coordinate pairs
-        x = self.metaData[xaxis]
-        y = self.metaData[yaxis]
-        z = self.metaData["MBF"]
-        func = sp.interpolate.interp2d(x, y, z)
-        cmhot = plt.get_cmap("viridis")
-
+    # The x3 axis is not fixed
+    def plotSlice(self,var1,var2,var3,fix1,fix2):
+        x1 = self.metaData[var1]
+        x2 = self.metaData[var2]
+        x3 = self.metaData[var3]
+        #x4 = self.metaData[var4]
+        z = self.metaData["Mean Best Fitness"]
+        yq = np.linspace(min(x3), max(x3))
+        Z = sp.interpolate.griddata(np.array([x1.ravel(),x2.ravel(),x3.ravel()]).T,
+                                          z.ravel(),
+                                          (fix1,fix2,yq),method='nearest') #method='cubic')   # default method is linea
+        #cmhot = plt.get_cmap("viridis")
         fig = plt.figure()
-        xq = fixed_x
-        yq = np.linspace(min(y), max(y))
-        Z = func(xq, yq)
         plt.plot(yq,Z)
-        plt.xlabel(yaxis)
+        plt.xlabel(var3)
         plt.ylabel("Mean Best Fitness")
         plt.show()
+
+    def evaluateAlgorithms(self):
+        self.all_runs = pd.DataFrame(columns=["Algorithm","run"])
+        i = 0
+        for index, row in self.metaData.iterrows():
+            for x in (1,row['runs']):
+                all_runs.loc[i] = [row["Algorithm"], x]
+                i=i+1
+        for index, row in self.metaData.iterrows():
+            self.evaluateAlgorithm(row["Algorithm"], row["runs"], row["islands"])
+        getMeanBestFitness(all_runs)
+        getAES(all_runs)
+        getProportionInTimeSuccessful(all_runs)
 
     # Evaluates the algorithm for performance measures and speed, results are put in the metaData file
     def evaluateAlgorithm(self,algorithm_name, run, islands):
         print(algorithm_name)
-        global all_runs
         for x in range(1,run+1):
             print("run " + str(x))
-            #algorithm = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + ".csv")
-            column_names = ["evaluations"]
-            for i in range(1,islands+1):
-                column_names.append("BF island " + str(i))
-            algorithm = pd.DataFrame(columns=column_names)
-            for y in range(0,islands):
+            algorithm = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + ".csv")
+            algorithm["Best Fitness Algorithm"] = getBestFitness(algorithm)
+            self.all_runs.loc[(self.all_runs['Algorithm']==algorithm_name)&(self.all_runs['run']==x),"successful"] = self.isAlgorithmSuccessful(algorithm)
+            self.all_runs.loc[(self.all_runs['Algorithm']==algorithm_name)&(self.all_runs['run']==x),"evaluations until success"] = self.whenAlgorithmSuccessful(algorithm)
+            self.all_runs.loc[(self.all_runs['Algorithm']==algorithm_name)&(self.all_runs['run']==x),"best fitness"] = algorithm["Best Fitness Algorithm"]
+            #column_names = ["evaluations"]
+            #for i in range(1,islands+1):
+            #    column_names.append("BF island " + str(i))
+            #algorithm = pd.DataFrame(columns=column_names)
+            #for y in range(0,islands):
 
                 #print("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv")
                 #island = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv")
-                column_names_island = ["generations", "evaluations"]
-                for j in range(1,100):
-                    column_names_island.append("fitness_"+str(j))
-                island = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv", names=column_names_island)
-                print(island)
+                #column_names_island = ["generations", "evaluations"]
+                #for j in range(1,100):
+                #    column_names_island.append("fitness_"+str(j))
+                #island = pd.read_csv("./islandModel/evaluation_files/" + str(algorithm_name) + "_" + str(x) + "_" + str(y) + ".csv", names=column_names_island)
+                #print(island)
                 #best_fitness_island = island.iloc[1]
 
-                algorithm["best fitness island " + str(y)] = self.getBestFitness(island)
-            algorithm["best fitness"] = self.getBestFitness(algorithm)
+                #algorithm["best fitness island " + str(y)] = self.getBestFitness(island)
+            #algorithm["best fitness"] = self.getBestFitness(algorithm)
             #algorithm["successful"] = isAlgorithmSuccessful(algorithm)
             #print(algorithm)
-            metaData.loc[(metaData['Algorithm']==algorithm_name),"best fitness run" +str(x)] = algorithm["best fitness"].max()
-            all_runs.loc[(all_runs['Algorithm']==algorithm_name)&(all_runs['run']==x),"successful"] = self.isAlgorithmSuccessful(algorithm)
-            all_runs.loc[(all_runs['Algorithm']==algorithm_name)&(all_runs['run']==x),"evaluations until success"] = self.whenAlgorithmSuccessful(algorithm)
+            #metaData.loc[(metaData['Algorithm']==algorithm_name),"best fitness run" +str(x)] = algorithm["best fitness"].max()
+            #all_runs.loc[(all_runs['Algorithm']==algorithm_name)&(all_runs['run']==x),"successful"] = self.isAlgorithmSuccessful(algorithm)
+            #all_runs.loc[(all_runs['Algorithm']==algorithm_name)&(all_runs['run']==x),"evaluations until success"] = self.whenAlgorithmSuccessful(algorithm)
 
 
         #for index, row in metaData.iterrows():
@@ -127,43 +160,48 @@ class Evaluator:
 
     # Gets the best fitness of each row
     def getBestFitness(self,algorithm):
-        fitness_cols = algorithm.filter(regex='fitness')
+        fitness_cols = algorithm.filter(regex='Fitness')
         return(fitness_cols.values.max(axis=1))
 
     # Checks if the algorithm is successful. True if less than epsilon from optimal value
     def isAlgorithmSuccessful(self,algorithm):
-        fitness_cols = algorithm.filter(regex='best fitness')
+        fitness_cols = algorithm.filter(regex='Best Fitness Island')
         return( fitness_cols.values.max() > (self.optimal_value - self.epsilon) )
 
     # AES as time measure
     def whenAlgorithmSuccessful(self,algorithm):
-        successes = algorithm.loc[algorithm["best fitness"] > (self.optimal_value - self.epsilon), "evaluations"]
+        successes = algorithm.loc[algorithm["Best Fitness Island"] > (self.optimal_value - self.epsilon), "evaluations"]
         if not successes.empty:
             return successes.iloc[0]
 
     # Gets the MBF and std of the algorithm and adds it to the meta data
-    def getMeanBestFitness(self,metaData_list):
-        fitness_cols = metaData_list.filter(regex='best fitness')
-        uniqueAlgorithms = metaData_list['Algorithm'].unique()
-        i = 0
-        for x in uniqueAlgorithms:
-            metaData.loc[metaData['Algorithm']==x, "MBF"] = fitness_cols.iloc[i].mean()
-            metaData.loc[metaData['Algorithm']==x, "std (best fitness)"] = fitness_cols.iloc[i].std()
-            i=i+1
+    def getMeanBestFitness(self,metaData_list,experiment):
+        #fitness_cols = metaData_list.filter(regex='best fitness')
+        fitness_cols = metaData_list.filter(regex='Fitness')
+        if experiment:
+            #print(fitness_cols)
+            #fitness_cols = pd.to_numeric(fitness_cols)
+            return(fitness_cols.values.mean(axis=1))
+        else:
+            uniqueAlgorithms = metaData_list['Algorithm'].unique()
+            i = 0
+            for x in uniqueAlgorithms:
+                self.metaData.loc[self.metaData['Algorithm']==x, "MBF"] = fitness_cols.iloc[i].mean()
+                self.metaData.loc[self.metaData['Algorithm']==x, "std (best fitness)"] = fitness_cols.iloc[i].std()
+                i=i+1
 
     # Gets the average number of evaluations on termination with successful outcomes
     def getAES(self,list):
-        global metaData
         uniqueAlgorithms = list['Algorithm'].unique()
         for x in uniqueAlgorithms:
-            metaData.loc[metaData['Algorithm']==x, "AES"] = list.loc[(list['Algorithm']==x) & (list["successful"]==True), "evaluations until success"].mean()
+            self.metaData.loc[self.metaData['Algorithm']==x, "AES"] = list.loc[(list['Algorithm']==x) & (list["successful"]==True), "evaluations until success"].mean()
 
     def getProportionInTimeSuccessful(self,list):
         uniqueAlgorithms = list['Algorithm'].unique()
         for x in uniqueAlgorithms:
              number_successful = list.loc[(list['Algorithm']==x) & (list["successful"]==True), "evaluations until success"].count()
              total = list.loc[list['Algorithm']==x,"Algorithm"].count()
-             metaData.loc[metaData['Algorithm']==x, "percentage successful in time"] = number_successful / float(total) * 100
+             self.metaData.loc[self.metaData['Algorithm']==x, "percentage successful in time"] = number_successful / float(total) * 100
 
     # Gets the T-test for the means of two independent samples of scores.
     # See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html#scipy.stats.ttest_ind
