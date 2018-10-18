@@ -14,7 +14,7 @@ import org.vu.contest.ContestEvaluation;
 public class Evaluator {
 
 	public static void main(String[] args) {
-		paramSearch("oskar2.csv");
+		paramSearch("silvanNew.csv");
 
 
 		//player64 model = new player64();
@@ -62,8 +62,8 @@ public class Evaluator {
 			player64 model = new player64();
 			// select params
 			Random r = new Random();
-			int islandAmount = (int)randomFromLogScale(1, 500);
-			int islandSize = (int)randomFromLogScale(10, 2000);
+			int islandAmount = (int)randomFromLogScale(8, 35);
+			int islandSize = (int)randomFromLogScale(4, 50);
 			double migrationSize = randomFromLogScale(.01, .2);
 			double crossoverRate = r.nextDouble();
 
@@ -108,7 +108,7 @@ public class Evaluator {
 
 				// write all to file
 				writer.write(String.format("%d,%d,%d,%f,%s,%s,%s,%s\n",
-						islandAmount, islandSize, (int)(migrationSize*islandSize), crossoverRate,
+						islandAmount, islandSize, (int)Math.ceil(migrationSize*islandSize), crossoverRate,
 						arrayToString(seeds), arrayToString(epochs), arrayToString(fitnesses), arrayArrayToString(bestGenotypes)));
 				writer.close();
 			} catch (IOException e){
