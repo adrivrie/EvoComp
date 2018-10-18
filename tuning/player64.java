@@ -120,8 +120,8 @@ public class player64 implements ContestSubmission
 	public void setExperiment(int islandAmount, int islandSize, double migrationSize, double crossoverRate) {
 		nIslands = islandAmount;
 		initialPopulationSize = islandSize;
-		migrateAmount = (int)migrationSize*islandSize;
-		//TODO this.crossoverRate = crossoverRate;
+		migrateAmount = (int)Math.ceil(migrationSize*islandSize);
+		this.crossoverRate = crossoverRate;
 	}
 	
 
