@@ -23,6 +23,7 @@ attributes['islandAmount'] = [int(x) for x in attributes['islandAmount']]
 print (attributes.keys())
 
 inversefitness = [10-x for x in attributes['meanFitness']]
+
 inversefitnessBest = [10-x for x in attributes['bestFitness']]
 
 for at in ['islandAmount', 'migrationSize', 'islandSize']:
@@ -48,3 +49,4 @@ plt.yscale('log')
 plt.ylabel('10 - fitness')
 plt.show()
 '''
+
