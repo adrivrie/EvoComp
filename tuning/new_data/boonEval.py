@@ -17,8 +17,7 @@ class run():
         self.fitnessMax = [float(x) for x in fitnessMax.split(";")]
         self.genotypeBest = [[float(y) for y in x.split(";")] for x in genotypeBest.split("|")]
         self.bestFitness = max(self.fitnessMax)
-        self.getMeanBestFitness = sum(self.fitnessMax)/len(self.fitnessMax)
-        self.Log_fit_10 = math.log10(10-self.bestFitness)
+        self.meanBestFitness = sum(self.fitnessMax)/len(self.fitnessMax)
 def read_files(filenames):
     filedata = []
     for file in filenames:
@@ -28,9 +27,10 @@ def read_files(filenames):
                 if not "islandAmount" in rows:
                     filedata.append(run(rows[0],rows[1],rows[2],rows[3],rows[4],rows[5],rows[6],rows[7]))
     params = filedata[0].__dict__.keys()
+    param2s = ["bestFitness","meanBestFitness"]
     for param1 in params:
-        for param2 in params:
-            if param2 != param1:
+        for param2 in param2s:
+            if param1 not in param2s:
                 plot_2D(filedata,param1,param2)
 """
         filedatas.append(filedata)
@@ -46,12 +46,17 @@ def plot_2D(data,param1,param2):
     p1s, p2s = [],[]
     for run in data:
         p1s.append(getattr(run,param1))
-        p2s.append(getattr(run,param2))
+        p2s.append(10-getattr(run,param2))
     try:
-        plt.plot(p1s,p2s,"bo")
+        plt.scatter(p1s,p2s)
         plt.xlabel(param1)
-        plt.ylabel(param2)
+        plt.ylabel("10-{}".format(param2))
+        if not param1 in ["crossoverRate","migrationSize"]:
+            plt.xscale("log")
+        plt.yscale("log")
         plt.savefig("{}_{}_plot.png".format(param1,param2))
+        # If this doesn't happen it keeps saving plots over itself
+        plt.show()
     except:
         print("cant make plot")
 if __name__ == "__main__":
