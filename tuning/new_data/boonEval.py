@@ -10,7 +10,7 @@ class run():
     def __init__(self,islandAmount,islandSize,migrationSize,crossoverRate,seed,epochAmount,fitnessMax,genotypeBest):
         self.islandAmount = int(islandAmount)
         self.islandSize = int(islandSize)
-        self.migrationSize = int(migrationSize)
+        self.migrationSize = (float(migrationSize)/float(islandSize))
         self.crossoverRate = float(crossoverRate)
         self.seed = [int(x) for x in seed.split(";")]
         self.epochAmount = [int(x) for x in epochAmount.split(";")]

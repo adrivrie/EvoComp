@@ -161,8 +161,7 @@ epsilon = 10
 optimal_value = 65
 time_threshold = 60 # how fast algorithm should be in AES
 
-
-metaData = pd.read_csv("./islandModel/evaluation_files/metaData.csv", names = ["Algorithm", "runs", "islands", "population size", "param_lifetime"])
+metaData = pd.read_csv("./islandModel/evaluation_files/metaData.csv", names = ["Algorithm", "runs", "islands", "population size"])
 print(metaData)
 
 all_runs = pd.DataFrame(columns=["Algorithm","run"])
@@ -177,7 +176,7 @@ for index, row in metaData.iterrows():
 for index, row in metaData.iterrows():
     evaluateAlgorithm(row["Algorithm"], row["runs"], row["islands"])
 
-print(all_runs)
+#print(all_runs)
 """
 getMeanBestFitness(metaData)
 #getBestFitnessSTD(metaData)

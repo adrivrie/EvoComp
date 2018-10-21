@@ -14,7 +14,7 @@ import org.vu.contest.ContestEvaluation;
 public class Evaluator {
 
 	public static void main(String[] args) {
-		paramSearch("silvanNew.csv");
+		paramSearch("bestParams.csv");
 
 
 		//player64 model = new player64();
@@ -58,14 +58,14 @@ public class Evaluator {
 
 		Data data;
 
-		while(true) {
+//		while(true) {
 			player64 model = new player64();
 			// select params
 			Random r = new Random();
-			int islandAmount = (int)randomFromLogScale(8, 35);
-			int islandSize = (int)randomFromLogScale(4, 50);
-			double migrationSize = randomFromLogScale(.01, .2);
-			double crossoverRate = r.nextDouble();
+			int islandAmount = 20;//(int)randomFromLogScale(8, 35);
+			int islandSize = 20;//(int)randomFromLogScale(4, 50);
+			double migrationSize = 0.25;//randomFromLogScale(.01, .2);
+			double crossoverRate = 0.7;//r.nextDouble();
 
 			System.out.println("Run with\n\tislandAmount="+islandAmount+"\n\tislandSize="+islandSize+
 					"\n\tmigrationSize="+migrationSize+"\n\tcrossoverRate="+crossoverRate);
@@ -89,7 +89,7 @@ public class Evaluator {
 					bestGenotypes[i][j] = data.bestGenotype[j];
 				}
 				epochs[i] = data.epochs;
-			}
+//			}
 
 			//print results
 			for (double fitness : fitnesses) {

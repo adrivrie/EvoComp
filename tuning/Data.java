@@ -15,9 +15,9 @@ public class Data {
 	public long evals;
 	public int epochs;
 	public double[] bestGenotype;
-	
-	
-	
+
+
+
 	// at index i, gives the best fitness of the population after generation i
 	public ArrayList<Double> bestFitness = new ArrayList<Double>();
 
@@ -41,7 +41,6 @@ public class Data {
 			history.addIsland(islands[islandIndex], islandIndex, epochIndex);
 		}
 	}
-
 
 	@Override
 	public String toString() {
@@ -121,7 +120,7 @@ public class Data {
 			try {
 				Files.createDirectories(filePath.getParent());
 				Files.createFile(filePath);
-				FileWriter writer = new FileWriter(new File(filePath.toString()));
+				FileWriter writer = new FileWriter(new File(filePath.toString()),true);
 				writer.write("generation,evaluations,population_size,best_fitness,all_fitness\n");
 				writer.close();
 			} catch (IOException e){
@@ -154,10 +153,22 @@ public class Data {
 					FileWriter writer = new FileWriter(file, true);
 					// get a string of all population fitnesses
 					String fitnessString = "";
+					String chromosomes = "";
 					for (Chromosome individual: island.population){
-						fitnessString += String.format(",%.0e",individual.fitness);
+						if (chromosomes != ""){
+							chromosomes += ";"+individual.toString();
+						}
+						else{
+							chromosomes += ","+individual.toString();
+						}
+						if (fitnessString != ""){
+							fitnessString += String.format(";%f",individual.fitness);
+						}
+						else{
+							fitnessString += String.format(",%f",individual.fitness);
+						}
 					}
-					fitnessString += "\n";
+					fitnessString += chromosomes+"\n";
 					// write all to file
 					writer.write(String.format("%d,%d,%d",island.nGenerations, island.evaluationsPerGeneration.get(island.nGenerations), island.population.size())+fitnessString);
 					//writer.write(String.format("%d,%d,%d,%.0e",island.nGenerations, island.evaluationsPerGeneration.get(island.nGenerations), island.population.size(), island.bestFitness)+fitnessString);

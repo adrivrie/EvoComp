@@ -90,7 +90,7 @@ public class player64 implements ContestSubmission
         	initStepSize = 0.1;
         	withMutationStepDecay = isKatsuura;
         }
-        
+
         crossoverRate = 0.7;
 
         //maxLifetime = 7;
@@ -116,14 +116,14 @@ public class player64 implements ContestSubmission
 //        		" evaluations with seed " +
 //        		seed);
     }
-	
+
 	public void setExperiment(int islandAmount, int islandSize, double migrationSize, double crossoverRate) {
 		nIslands = islandAmount;
 		initialPopulationSize = islandSize;
 		migrateAmount = (int)Math.ceil(migrationSize*islandSize);
 		this.crossoverRate = crossoverRate;
 	}
-	
+
 
 	public void run() {}
 	public Data runData()
@@ -163,7 +163,7 @@ public class player64 implements ContestSubmission
 //					String.format("%6.3e", best)) + String.format(" (from island %d)", bestIsland));
 
         while(evals < evaluations_limit_){
-        	
+
             // RUN EVOLUTION CYCLE ON ISLANDS
         	for (Island island : islands) {
         		island.runCycle();
@@ -189,18 +189,18 @@ public class player64 implements ContestSubmission
                     bestIsland = i;
                 }
             }
-            
+
             int nInds = 0;
             for (Island i : islands) {
             	nInds+=i.population.size();
             }
             //System.out.println(nInds);
-            
+
         	//System.out.println("Starting to write");
-            //Data.writeIteration(islands, nEpochs);
+            Data.writeIteration(islands, nEpochs);
         	//System.out.println("End to write");
             /////////////////////////////////////////////////////////////////////
-        	
+
 //			if (nGenerations % printFreq == 0) {
 //				System.out.println(String.format(
 //    				"\tafter %d evaluations / %d generations:   \t", evals, nGenerations) +
@@ -237,7 +237,7 @@ public class player64 implements ContestSubmission
         }
         //System.out.println("\nTotal evaluations: " + totEvals + " - check: " + evals);
 
-        
+
         Data d = new Data();
         d.fitness = best;
         d.individual = bestChr;
